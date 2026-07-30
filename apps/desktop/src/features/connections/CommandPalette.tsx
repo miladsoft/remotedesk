@@ -11,12 +11,9 @@ import {
 import { useUiStore } from "@/stores/useUiStore";
 import { useServerStore } from "@/stores/useServerStore";
 import { api } from "@/lib/tauri";
+import { connectToServer } from "@/lib/connect";
 
-interface CommandPaletteProps {
-  onSelectServer: (server: Server) => void;
-}
-
-export function CommandPalette({ onSelectServer }: CommandPaletteProps) {
+export function CommandPalette() {
   const open = useUiStore((s) => s.commandPaletteOpen);
   const setOpen = useUiStore((s) => s.setCommandPaletteOpen);
   const allServers = useServerStore((s) => s.servers);
@@ -72,8 +69,8 @@ export function CommandPalette({ onSelectServer }: CommandPaletteProps) {
               key={server.id}
               value={server.id}
               onSelect={() => {
-                onSelectServer(server);
                 handleOpenChange(false);
+                void connectToServer(server);
               }}
             >
               <span className="font-medium">{server.name}</span>

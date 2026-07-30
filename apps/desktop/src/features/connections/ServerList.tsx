@@ -7,6 +7,7 @@ import {
   Trash2,
   KeyRound,
   ServerOff,
+  Plug,
 } from "lucide-react";
 import type { Server } from "@remotedesk/types";
 import { Badge } from "@/components/ui/badge";
@@ -30,6 +31,7 @@ import {
 import { useServerStore } from "@/stores/useServerStore";
 import { useUiStore } from "@/stores/useUiStore";
 import { errorMessage } from "@/lib/tauri";
+import { connectToServer } from "@/lib/connect";
 import { ServerFormDialog } from "./ServerFormDialog";
 import { RevealCredentialDialog } from "./RevealCredentialDialog";
 
@@ -164,6 +166,10 @@ export function ServerList() {
                   </p>
                 </div>
 
+                <Button size="sm" variant="secondary" onClick={() => void connectToServer(server)}>
+                  <Plug className="mr-1.5 h-3.5 w-3.5" /> Connect
+                </Button>
+
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="ghost" size="icon">
@@ -171,6 +177,9 @@ export function ServerList() {
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={() => void connectToServer(server)}>
+                      <Plug className="mr-2 h-4 w-4" /> Connect
+                    </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => setEditingServer(server)}>
                       <Pencil className="mr-2 h-4 w-4" /> Edit
                     </DropdownMenuItem>
