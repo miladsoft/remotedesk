@@ -198,3 +198,59 @@ pub fn close_session(sessions: &SessionMap, session_id: &str) -> AppResult<()> {
         .map_err(AppError::Io);
     result
 }
+
+#[cfg(test)]
+mod tests {
+    use std::io::{Read, Write};
+    use std::time::{Duration, Instant};
+
+    use portable_pty::{native_pty_system, CommandBuilder, PtySize};
+
+    /// Exercises the raw portable-pty mechanics this module builds on —
+    /// spawn, read, write, resize, kill — independent of Tauri's Channel
+    /// (which needs a running app to construct), as a sanity check that
+    /// real pty allocation works on this OS/sandbox.
+    #[test]
+    fn spawns_a_real_pty_process_and_can_read_write_resize_and_kill_it() {
+        let pty_system = native_pty_system();
+        let pair = pty_system
+            .openpty(PtySize { rows: 24, cols: 80, pixel_width: 0, pixel_height: 0 })
+            .expect("open pty");
+
+        let cmd = CommandBuilder::new("cat");
+        let mut child = pair.slave.spawn_command(cmd).expect("spawn cat");
+        drop(pair.slave);
+
+        let mut reader = pair.master.try_clone_reader().expect("clone reader");
+        let mut writer = pair.master.take_writer().expect("take writer");
+
+        pair.master
+            .resize(PtySize { rows: 40, cols: 120, pixel_width: 0, pixel_height: 0 })
+            .expect("resize pty");
+
+        writer.write_all(b"hello-pty-smoke\n").expect("write to pty");
+
+        let mut collected = Vec::new();
+        let deadline = Instant::now() + Duration::from_secs(5);
+        let mut buf = [0u8; 256];
+        while Instant::now() < deadline && !contains(&collected, b"hello-pty-smoke") {
+            match reader.read(&mut buf) {
+                Ok(0) => break,
+                Ok(n) => collected.extend_from_slice(&buf[..n]),
+                Err(_) => break,
+            }
+        }
+
+        assert!(
+            contains(&collected, b"hello-pty-smoke"),
+            "expected echoed input in pty output, got: {:?}",
+            String::from_utf8_lossy(&collected)
+        );
+
+        child.kill().expect("kill child");
+    }
+
+    fn contains(haystack: &[u8], needle: &[u8]) -> bool {
+        haystack.windows(needle.len()).any(|w| w == needle)
+    }
+}
