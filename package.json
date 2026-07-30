@@ -1,0 +1,13 @@
+{
+  "name": "remotedesk",
+  "private": true,
+  "version": "0.1.0",
+  "scripts": {
+    "dev": "pnpm --filter @remotedesk/desktop tauri dev",
+    "build": "pnpm --filter @remotedesk/desktop tauri build",
+    "web:dev": "pnpm --filter @remotedesk/desktop dev",
+    "typecheck": "pnpm --filter @remotedesk/desktop exec tsc --noEmit",
+    "tauri": "pnpm --filter @remotedesk/desktop tauri"
+  },
+  "packageManager": "pnpm@9.15.9"
+}
