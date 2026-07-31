@@ -13,12 +13,36 @@ use application::LockService;
 use infrastructure::pty::SessionState;
 use state::{DbState, LockState};
 
+/// `cargo run`/`tauri dev` launches a bare, unbundled binary, so macOS has no
+/// `Info.plist` to read `CFBundleIconFile` from and falls back to a generic
+/// Dock icon. Setting `NSApplication.applicationIconImage` directly fixes the
+/// Dock icon in dev mode too, matching the packaged `.app` (whose icon comes
+/// from `bundle.icon` in `tauri.conf.json` instead).
+#[cfg(all(target_os = "macos", debug_assertions))]
+fn set_dev_dock_icon() {
+    use objc2::{AnyThread, MainThreadMarker};
+    use objc2_app_kit::{NSApplication, NSImage};
+    use objc2_foundation::NSData;
+
+    let Some(mtm) = MainThreadMarker::new() else { return };
+    let bytes = include_bytes!("../icons/icon.png");
+    let data = NSData::with_bytes(bytes);
+    let image = NSImage::initWithData(NSImage::alloc(), &data);
+    if let Some(image) = image {
+        let app = NSApplication::sharedApplication(mtm);
+        unsafe { app.setApplicationIconImage(Some(&image)) };
+    }
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_dialog::init())
         .setup(|app| {
+            #[cfg(all(target_os = "macos", debug_assertions))]
+            set_dev_dock_icon();
+
             let data_dir = app.path().app_data_dir()?;
             std::fs::create_dir_all(&data_dir)?;
             let conn = infrastructure::database::open(&data_dir.join("servers.db"))?;
