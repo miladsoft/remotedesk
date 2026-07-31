@@ -13,6 +13,8 @@ import {
   KeyRound,
   ServerOff,
   Plug,
+  PanelLeftClose,
+  PanelLeftOpen,
 } from "lucide-react";
 import type { Server, ServerGroup } from "@remotedesk/types";
 import { Badge } from "@/components/ui/badge";
@@ -262,6 +264,8 @@ export function Sidebar() {
   const selectTag = useUiStore((s) => s.selectTag);
   const searchQuery = useUiStore((s) => s.searchQuery);
   const sidebarWidth = useUiStore((s) => s.sidebarWidth);
+  const sidebarCollapsed = useUiStore((s) => s.sidebarCollapsed);
+  const setSidebarCollapsed = useUiStore((s) => s.setSidebarCollapsed);
   const [groupDialogOpen, setGroupDialogOpen] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
 
@@ -303,9 +307,62 @@ export function Sidebar() {
     return list;
   }, [servers, selectedGroupId, selectedTagId, searchQuery]);
 
+  if (sidebarCollapsed) {
+    return (
+      <div className="flex h-full w-11 shrink-0 flex-col items-center gap-1 border-r bg-sidebar py-2">
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-7 w-7"
+          title="Expand sidebar"
+          onClick={() => setSidebarCollapsed(false)}
+        >
+          <PanelLeftOpen className="h-4 w-4" />
+        </Button>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="mt-1 h-8 w-8"
+          title="All servers"
+          onClick={() => {
+            selectGroup(null);
+            setSidebarCollapsed(false);
+          }}
+        >
+          <ServerIcon className="h-4 w-4" />
+        </Button>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-8 w-8"
+          title="New connection"
+          onClick={() => {
+            setSidebarCollapsed(false);
+            setCreateOpen(true);
+          }}
+        >
+          <Plus className="h-4 w-4" />
+        </Button>
+        <ServerFormDialog open={createOpen} onOpenChange={setCreateOpen} />
+      </div>
+    );
+  }
+
   return (
     <div className="flex h-full shrink-0" style={{ width: sidebarWidth }}>
       <aside className="flex h-full min-w-0 flex-1 flex-col overflow-y-auto border-r bg-sidebar px-2 py-4">
+        <div className="mb-1 flex items-center justify-between px-1">
+          <span className="px-2 text-xs font-semibold text-muted-foreground">RemoteDesk</span>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-6 w-6"
+            title="Collapse sidebar"
+            onClick={() => setSidebarCollapsed(true)}
+          >
+            <PanelLeftClose className="h-3.5 w-3.5" />
+          </Button>
+        </div>
         <nav className="flex flex-col gap-0.5">
           <button
             onClick={() => selectGroup(null)}

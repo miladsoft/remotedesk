@@ -49,10 +49,27 @@ export function TerminalPane({ sessionId, visible }: TerminalPaneProps) {
     });
     resizeObserver.observe(container);
 
+    // Right-click copies the current selection, or pastes the clipboard if
+    // nothing's selected — the standard terminal-app convention.
+    const onContextMenu = (e: MouseEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (term.hasSelection()) {
+        void navigator.clipboard.writeText(term.getSelection());
+        term.clearSelection();
+      } else {
+        void navigator.clipboard.readText().then((text) => {
+          if (text) void api.session.write(sessionId, text);
+        });
+      }
+    };
+    container.addEventListener("contextmenu", onContextMenu);
+
     return () => {
       unsubscribe();
       dataDisposable.dispose();
       resizeObserver.disconnect();
+      container.removeEventListener("contextmenu", onContextMenu);
       term.dispose();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps

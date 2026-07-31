@@ -5,9 +5,11 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { AboutDialog } from "./AboutDialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -45,6 +47,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
   const [exportPassphrase, setExportPassphrase] = useState("");
   const [importPassphrase, setImportPassphrase] = useState("");
   const [busy, setBusy] = useState(false);
+  const [aboutOpen, setAboutOpen] = useState(false);
 
   async function handleSetPassphrase() {
     setSavingPassphrase(true);
@@ -118,15 +121,16 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[85vh] sm:max-w-lg overflow-y-auto">
-        <DialogHeader>
+      <DialogContent className="flex max-h-[85vh] flex-col gap-0 overflow-hidden p-0 sm:max-w-lg">
+        <DialogHeader className="border-b p-4">
           <DialogTitle>Settings</DialogTitle>
+        </DialogHeader>
+
+        <div className="flex min-h-0 flex-1 flex-col gap-6 overflow-y-auto p-4">
           <DialogDescription>
             Manage app lock, appearance, and encrypted backups.
           </DialogDescription>
-        </DialogHeader>
 
-        <div className="flex flex-col gap-6">
           <section className="flex flex-col gap-3">
             <h3 className="text-sm font-medium">Appearance</h3>
             <Select value={theme} onValueChange={(v) => setTheme(v as ThemeMode)}>
@@ -239,7 +243,18 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
             </div>
           </section>
         </div>
+
+        <DialogFooter className="mx-0 mb-0 justify-between border-t bg-muted/50 p-4">
+          <Button variant="ghost" size="sm" onClick={() => setAboutOpen(true)}>
+            About RemoteDesk
+          </Button>
+          <Button size="sm" onClick={() => onOpenChange(false)}>
+            Done
+          </Button>
+        </DialogFooter>
       </DialogContent>
+
+      <AboutDialog open={aboutOpen} onOpenChange={setAboutOpen} />
     </Dialog>
   );
 }

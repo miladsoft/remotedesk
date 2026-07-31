@@ -15,6 +15,7 @@ interface UiStore {
   theme: ThemeMode;
   commandPaletteOpen: boolean;
   sidebarWidth: number;
+  sidebarCollapsed: boolean;
 
   setSearchQuery: (query: string) => void;
   selectGroup: (groupId: string | null | "favorites") => void;
@@ -23,6 +24,7 @@ interface UiStore {
   setTheme: (theme: ThemeMode) => void;
   setCommandPaletteOpen: (open: boolean) => void;
   setSidebarWidth: (width: number) => void;
+  setSidebarCollapsed: (collapsed: boolean) => void;
 }
 
 const storedTheme = (localStorage.getItem("theme") as ThemeMode | null) ?? "system";
@@ -33,6 +35,8 @@ const initialSidebarWidth =
     ? storedSidebarWidth
     : DEFAULT_SIDEBAR_WIDTH;
 
+const initialSidebarCollapsed = localStorage.getItem("sidebarCollapsed") === "true";
+
 export const useUiStore = create<UiStore>((set) => ({
   searchQuery: "",
   selectedGroupId: null,
@@ -41,6 +45,7 @@ export const useUiStore = create<UiStore>((set) => ({
   theme: storedTheme,
   commandPaletteOpen: false,
   sidebarWidth: initialSidebarWidth,
+  sidebarCollapsed: initialSidebarCollapsed,
 
   setSearchQuery: (searchQuery) => set({ searchQuery }),
   selectGroup: (selectedGroupId) => set({ selectedGroupId, selectedTagId: null }),
@@ -55,5 +60,9 @@ export const useUiStore = create<UiStore>((set) => ({
     const clamped = Math.max(MIN_SIDEBAR_WIDTH, Math.min(width, MAX_SIDEBAR_WIDTH));
     localStorage.setItem("sidebarWidth", String(clamped));
     set({ sidebarWidth: clamped });
+  },
+  setSidebarCollapsed: (sidebarCollapsed) => {
+    localStorage.setItem("sidebarCollapsed", String(sidebarCollapsed));
+    set({ sidebarCollapsed });
   },
 }));

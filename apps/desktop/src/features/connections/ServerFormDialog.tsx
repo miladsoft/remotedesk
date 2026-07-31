@@ -120,15 +120,19 @@ export function ServerFormDialog({ open, onOpenChange, server }: ServerFormDialo
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[85vh] sm:max-w-lg overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>{server ? "Edit Connection" : "New Connection"}</DialogTitle>
-          <DialogDescription>
-            Passwords and passphrases are stored in your OS keychain, never in the database.
-          </DialogDescription>
-        </DialogHeader>
+      <DialogContent className="flex max-h-[85vh] flex-col gap-0 overflow-hidden p-0 sm:max-w-lg">
+        <form
+          onSubmit={handleSubmit(onSubmit)}
+          className="flex min-h-0 flex-1 flex-col"
+        >
+          <DialogHeader className="shrink-0 border-b p-4">
+            <DialogTitle>{server ? "Edit Connection" : "New Connection"}</DialogTitle>
+          </DialogHeader>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
+          <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto p-4">
+            <DialogDescription>
+              Passwords and passphrases are stored in your OS keychain, never in the database.
+            </DialogDescription>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div className="col-span-2 flex flex-col gap-1.5">
               <Label htmlFor="name">Name</Label>
@@ -302,9 +306,10 @@ export function ServerFormDialog({ open, onOpenChange, server }: ServerFormDialo
             </div>
           </div>
 
-          {submitError && <p className="text-sm text-destructive">{submitError}</p>}
+          {submitError && <p className="mt-4 text-sm text-destructive">{submitError}</p>}
+          </div>
 
-          <DialogFooter>
+          <DialogFooter className="mx-0 mb-0 shrink-0 border-t bg-muted/50 p-4">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Cancel
             </Button>
