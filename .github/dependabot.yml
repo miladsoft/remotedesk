@@ -1,0 +1,20 @@
+version: 2
+updates:
+  - package-ecosystem: "cargo"
+    directory: "/apps/desktop/src-tauri"
+    schedule:
+      interval: "weekly"
+    ignore:
+      # glib 0.18.x (GTK3 Rust bindings) has RUSTSEC-2024-0429 (unsoundness in
+      # VariantStrIter). The fix is in glib >= 0.20.0, which is part of the GTK4
+      # Rust bindings ecosystem. Tauri 2.x uses WebKit2GTK (GTK3-based), so
+      # upgrading glib to 0.20.x would require migrating the entire GTK stack
+      # from GTK3 to GTK4 — this is outside the scope of this project and
+      # cannot be done without upstream changes to wry/tauri. The unsound code
+      # path (VariantStrIter) is not exercised by tauri or wry.
+      - dependency-name: "glib"
+
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
