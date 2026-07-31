@@ -89,7 +89,7 @@ export function GroupFormDialog({ open, onOpenChange, group }: GroupFormDialogPr
           <div className="flex flex-col gap-1.5">
             <Label>Parent group</Label>
             <Select value={parentId} onValueChange={setParentId}>
-              <SelectTrigger>
+              <SelectTrigger className="w-full">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>

@@ -166,7 +166,7 @@ export function ServerFormDialog({ open, onOpenChange, server }: ServerFormDialo
                 name="protocol"
                 render={({ field }) => (
                   <Select value={field.value} onValueChange={field.onChange}>
-                    <SelectTrigger>
+                    <SelectTrigger className="w-full">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -194,7 +194,7 @@ export function ServerFormDialog({ open, onOpenChange, server }: ServerFormDialo
                 name="authenticationType"
                 render={({ field }) => (
                   <Select value={field.value} onValueChange={field.onChange}>
-                    <SelectTrigger>
+                    <SelectTrigger className="w-full">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -238,7 +238,7 @@ export function ServerFormDialog({ open, onOpenChange, server }: ServerFormDialo
                     value={field.value ?? "none"}
                     onValueChange={(value) => field.onChange(value === "none" ? undefined : value)}
                   >
-                    <SelectTrigger>
+                    <SelectTrigger className="w-full">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
