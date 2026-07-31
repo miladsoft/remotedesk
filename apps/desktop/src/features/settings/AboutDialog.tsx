@@ -1,6 +1,7 @@
 import { openUrl } from "@tauri-apps/plugin-opener";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { useUpdateStore } from "@/stores/useUpdateStore";
 import pkg from "../../../package.json";
 
 interface AboutDialogProps {
@@ -9,6 +10,9 @@ interface AboutDialogProps {
 }
 
 export function AboutDialog({ open, onOpenChange }: AboutDialogProps) {
+  const checking = useUpdateStore((s) => s.checking);
+  const checkForUpdate = useUpdateStore((s) => s.checkForUpdate);
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-sm">
@@ -33,9 +37,19 @@ export function AboutDialog({ open, onOpenChange }: AboutDialogProps) {
             <span>·</span>
             <span>© {new Date().getFullYear()} Milad Raeisi</span>
           </div>
-          <Button variant="outline" size="sm" className="mt-1" onClick={() => onOpenChange(false)}>
-            Close
-          </Button>
+          <div className="mt-1 flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={checking}
+              onClick={() => void checkForUpdate({ silent: false })}
+            >
+              {checking ? "Checking…" : "Check for Updates"}
+            </Button>
+            <Button size="sm" onClick={() => onOpenChange(false)}>
+              Close
+            </Button>
+          </div>
         </div>
       </DialogContent>
     </Dialog>

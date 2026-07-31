@@ -10,6 +10,7 @@ import { LockScreen } from "@/features/settings/LockScreen";
 import { TerminalDock } from "@/features/terminal/TerminalDock";
 import { useLockStore } from "@/stores/useLockStore";
 import { useServerStore } from "@/stores/useServerStore";
+import { useUpdateStore } from "@/stores/useUpdateStore";
 import { useIdleLock } from "@/hooks/useIdleLock";
 
 function App() {
@@ -17,6 +18,7 @@ function App() {
   const locked = useLockStore((s) => s.locked);
   const refreshLock = useLockStore((s) => s.refresh);
   const loadAll = useServerStore((s) => s.loadAll);
+  const checkForUpdate = useUpdateStore((s) => s.checkForUpdate);
   const [settingsOpen, setSettingsOpen] = useState(false);
 
   useIdleLock();
@@ -28,8 +30,9 @@ function App() {
   useEffect(() => {
     if (loaded && !locked) {
       void loadAll();
+      void checkForUpdate();
     }
-  }, [loaded, locked, loadAll]);
+  }, [loaded, locked, loadAll, checkForUpdate]);
 
   if (!loaded) {
     return (
