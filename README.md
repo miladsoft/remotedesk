@@ -1,9 +1,9 @@
 # RemoteDesk
 
-A cross-platform, local-first remote server connection manager for macOS, Windows, and Linux — built with [Tauri 2](https://tauri.app), Rust, and React.
+A cross-platform, local-first remote server connection manager for macOS, Windows, and Linux — built with Rust and React.
 
-[![Latest release](https://img.shields.io/github/v/release/miladsoft/server-manager?label=latest%20release)](https://github.com/miladsoft/server-manager/releases/latest)
-[![Release build](https://github.com/miladsoft/server-manager/actions/workflows/release.yml/badge.svg)](https://github.com/miladsoft/server-manager/actions/workflows/release.yml)
+[![Latest release](https://img.shields.io/github/v/release/miladsoft/remotedesk?label=latest%20release)](https://github.com/miladsoft/remotedesk/releases/latest)
+[![Release build](https://github.com/miladsoft/remotedesk/actions/workflows/release.yml/badge.svg)](https://github.com/miladsoft/remotedesk/actions/workflows/release.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 ## Features
@@ -16,7 +16,7 @@ A cross-platform, local-first remote server connection manager for macOS, Window
 
 ## Download
 
-Grab the latest build for your platform from the [**Releases**](https://github.com/miladsoft/server-manager/releases/latest) page:
+Grab the latest build for your platform from the [**Releases**](https://github.com/miladsoft/remotedesk/releases/latest) page:
 
 | Platform | Format |
 | --- | --- |
@@ -28,16 +28,16 @@ Grab the latest build for your platform from the [**Releases**](https://github.c
 
 ## Development
 
-Prerequisites: [Node.js](https://nodejs.org) 20+, [pnpm](https://pnpm.io) 9+, and a [Rust toolchain](https://rustup.rs) with the [Tauri prerequisites](https://tauri.app/start/prerequisites/) for your OS.
+Prerequisites: [Node.js](https://nodejs.org) 20+, [pnpm](https://pnpm.io) 9+, and a [Rust toolchain](https://rustup.rs). On Linux you'll also need the WebKitGTK development libraries (see [`.github/workflows/release.yml`](.github/workflows/release.yml) for the exact package list); macOS needs the Xcode Command Line Tools and Windows needs the Visual Studio Build Tools.
 
 ```bash
 pnpm install     # install dependencies for the whole workspace
-pnpm dev         # launch the desktop app (Tauri + Vite) in dev mode
+pnpm dev         # launch the desktop app in dev mode
 pnpm build       # produce a production build for your current OS
 pnpm typecheck   # type-check the desktop app
 ```
 
-The desktop app lives in [`apps/desktop`](apps/desktop) (React/Vite frontend in `src`, Rust/Tauri backend in `src-tauri`); shared TypeScript types live in [`packages/types`](packages/types).
+The desktop app lives in [`apps/desktop`](apps/desktop) (React/Vite frontend in `src`, Rust backend in `src-tauri`); shared TypeScript types live in [`packages/types`](packages/types).
 
 ## Releasing
 
@@ -49,7 +49,7 @@ Releases are built and published automatically by [`.github/workflows/release.ym
    git push origin v1.2.3
    ```
    or **run it manually** from the *Actions* tab → *Release* → *Run workflow*, entering a version number — the tag is created for you.
-2. The workflow stamps that version into `package.json`, `tauri.conf.json`, and `Cargo.toml`, builds installers for all three platforms, and publishes them to a new [GitHub Release](https://github.com/miladsoft/server-manager/releases) with that tag.
+2. The workflow stamps that version into `package.json`, `tauri.conf.json`, and `Cargo.toml`, builds installers for all three platforms, and publishes them to a new [GitHub Release](https://github.com/miladsoft/remotedesk/releases) with that tag.
 
 ## License
 
