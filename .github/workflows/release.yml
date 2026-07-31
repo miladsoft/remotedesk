@@ -1,25 +1,101 @@
-name: Release
+name: Build & Release
 
-# Two ways to cut a release:
-#   1. Push a tag:            git tag v1.2.3 && git push origin v1.2.3
-#   2. Actions tab, "Run workflow", type a version — the tag is created for you.
-# Either way, the version below is stamped into package.json, tauri.conf.json,
-# and Cargo.toml before building, so the shipped app always matches the tag.
+# Runs on every commit to main:
+#   - always: a fast build check (typecheck + cargo check).
+#   - only when `version` in package.json is one that hasn't been tagged
+#     yet: a full macOS/Windows/Linux build, published as a GitHub Release
+#     for that version.
+# In other words: bump "version" in package.json and push — that commit's
+# release is what users get on the Releases page. Commits that don't touch
+# the version just get the build check, nothing is published.
 on:
   push:
-    tags:
-      - "v*.*.*"
+    branches: [main]
   workflow_dispatch:
-    inputs:
-      version:
-        description: "Version to release (e.g. 1.2.3, no leading v)"
-        required: true
 
 permissions:
   contents: write
 
 jobs:
+  version:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.read.outputs.version }}
+      is_new: ${{ steps.check.outputs.is_new }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Read version from package.json
+        id: read
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          if ! [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.]+)?$ ]]; then
+            echo "package.json version '$VERSION' is not a plain x.y.z version" >&2
+            exit 1
+          fi
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Check whether this version was already released
+        id: check
+        run: |
+          if git ls-remote --exit-code --tags origin "refs/tags/v${{ steps.read.outputs.version }}" >/dev/null 2>&1; then
+            echo "is_new=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "is_new=true" >> "$GITHUB_OUTPUT"
+          fi
+
+  build-check:
+    name: Build check
+    needs: version
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Linux system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libwebkit2gtk-4.1-dev \
+            build-essential \
+            curl \
+            wget \
+            file \
+            libxdo-dev \
+            libssl-dev \
+            libayatana-appindicator3-dev \
+            librsvg2-dev
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache Rust build
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: apps/desktop/src-tauri
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install frontend dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: cargo check
+        working-directory: apps/desktop/src-tauri
+        run: cargo check
+
   release:
+    name: Build & publish release
+    needs: [version, build-check]
+    if: needs.version.outputs.is_new == 'true'
     strategy:
       fail-fast: false
       matrix:
@@ -35,20 +111,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Resolve version
-        id: version
+      - name: Sync version into project files
         shell: bash
-        run: |
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            VERSION="${{ github.event.inputs.version }}"
-          else
-            VERSION="${GITHUB_REF_NAME#v}"
-          fi
-          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
-
-      - name: Stamp version into project files
-        shell: bash
-        run: node scripts/set-version.mjs "${{ steps.version.outputs.version }}"
+        run: node scripts/set-version.mjs "${{ needs.version.outputs.version }}"
 
       - name: Install Linux system dependencies
         if: matrix.platform == 'ubuntu-22.04'

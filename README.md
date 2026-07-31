@@ -41,15 +41,20 @@ The desktop app lives in [`apps/desktop`](apps/desktop) (React/Vite frontend in 
 
 ## Releasing
 
-Releases are built and published automatically by [`.github/workflows/release.yml`](.github/workflows/release.yml) for macOS, Windows, and Linux. To cut a release:
+[`.github/workflows/release.yml`](.github/workflows/release.yml) runs on every commit to `main`:
 
-1. **Tag it:**
-   ```bash
-   git tag v1.2.3
-   git push origin v1.2.3
-   ```
-   or **run it manually** from the *Actions* tab → *Release* → *Run workflow*, entering a version number — the tag is created for you.
-2. The workflow stamps that version into `package.json`, `tauri.conf.json`, and `Cargo.toml`, builds installers for all three platforms, and publishes them to a new [GitHub Release](https://github.com/miladsoft/remotedesk/releases) with that tag.
+- It always runs a fast build check (typecheck + `cargo check`).
+- If the `version` in [`package.json`](package.json) is one that hasn't been released yet, it also builds installers for macOS, Windows, and Linux and publishes them to a new [GitHub Release](https://github.com/miladsoft/remotedesk/releases) tagged `v<version>`.
+
+So cutting a release is just:
+
+```bash
+# bump "version" in package.json, e.g. 0.1.0 -> 0.2.0
+git commit -am "release: 0.2.0"
+git push
+```
+
+Commits that don't change the version just get the build check — nothing is published.
 
 ## License
 
