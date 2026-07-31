@@ -54,7 +54,7 @@ export function RevealCredentialDialog({ server, onOpenChange }: RevealCredentia
 
   return (
     <Dialog open={server !== null} onOpenChange={handleOpenChange}>
-      <DialogContent className="max-w-sm">
+      <DialogContent>
         <DialogHeader>
           <DialogTitle>Reveal credential</DialogTitle>
           <DialogDescription>

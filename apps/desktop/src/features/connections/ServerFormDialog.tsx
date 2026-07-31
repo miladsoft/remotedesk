@@ -120,7 +120,7 @@ export function ServerFormDialog({ open, onOpenChange, server }: ServerFormDialo
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[85vh] max-w-lg overflow-y-auto">
+      <DialogContent className="max-h-[85vh] sm:max-w-lg overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{server ? "Edit Connection" : "New Connection"}</DialogTitle>
           <DialogDescription>
@@ -129,7 +129,7 @@ export function ServerFormDialog({ open, onOpenChange, server }: ServerFormDialo
         </DialogHeader>
 
         <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div className="col-span-2 flex flex-col gap-1.5">
               <Label htmlFor="name">Name</Label>
               <Input id="name" {...register("name")} autoFocus />

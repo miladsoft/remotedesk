@@ -15,13 +15,11 @@ type Listener = (event: PtyEvent) => void;
 interface TerminalStore {
   sessions: TerminalSession[];
   activeSessionId: string | null;
-  dockOpen: boolean;
 
   connect: (server: Server) => Promise<string>;
   closeSession: (sessionId: string) => Promise<void>;
   removeSession: (sessionId: string) => void;
   setActive: (sessionId: string) => void;
-  setDockOpen: (open: boolean) => void;
   /** Imperative subscription for a TerminalPane to receive its session's pty events. */
   subscribe: (sessionId: string, listener: Listener) => () => void;
 }
@@ -40,7 +38,6 @@ function emit(sessionId: string, event: PtyEvent) {
 export const useTerminalStore = create<TerminalStore>((set, get) => ({
   sessions: [],
   activeSessionId: null,
-  dockOpen: false,
 
   connect: async (server) => {
     const idBox: { current: string | null } = { current: null };
@@ -73,7 +70,6 @@ export const useTerminalStore = create<TerminalStore>((set, get) => ({
         { id: sessionId, serverId: server.id, serverName: server.name, status: "open" },
       ],
       activeSessionId: sessionId,
-      dockOpen: true,
     }));
 
     for (const event of backlog) emit(sessionId, event);
@@ -96,12 +92,11 @@ export const useTerminalStore = create<TerminalStore>((set, get) => ({
         s.activeSessionId === sessionId
           ? (sessions[sessions.length - 1]?.id ?? null)
           : s.activeSessionId;
-      return { sessions, activeSessionId, dockOpen: sessions.length > 0 && s.dockOpen };
+      return { sessions, activeSessionId };
     });
   },
 
   setActive: (sessionId) => set({ activeSessionId: sessionId }),
-  setDockOpen: (dockOpen) => set({ dockOpen }),
 
   subscribe: (sessionId, listener) => {
     let listeners = sessionListeners.get(sessionId);

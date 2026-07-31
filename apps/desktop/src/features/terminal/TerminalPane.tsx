@@ -23,7 +23,7 @@ export function TerminalPane({ sessionId, visible }: TerminalPaneProps) {
       cursorBlink: true,
       fontSize: 13,
       fontFamily: "ui-monospace, SFMono-Regular, Menlo, Consolas, monospace",
-      theme: { background: "#0a0a0a" },
+      theme: { background: "#000000" },
     });
     const fitAddon = new FitAddon();
     term.loadAddon(fitAddon);
@@ -60,7 +60,7 @@ export function TerminalPane({ sessionId, visible }: TerminalPaneProps) {
 
   return (
     <div
-      className="h-full w-full px-2 py-1"
+      className="h-full w-full bg-black"
       style={{ display: visible ? "block" : "none" }}
       ref={containerRef}
     />

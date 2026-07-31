@@ -33,10 +33,11 @@ export function LockScreen() {
         className="flex w-full max-w-sm flex-col gap-4 rounded-lg border bg-card p-8 shadow-sm"
       >
         <div className="flex flex-col items-center gap-2 text-center">
-          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted">
-            <Lock className="h-5 w-5 text-muted-foreground" />
-          </div>
-          <h1 className="text-lg font-semibold">RemoteDesk is locked</h1>
+          <img src="/rd.png" alt="RemoteDesk" className="h-14 w-14 rounded-2xl" />
+          <h1 className="flex items-center gap-1.5 text-lg font-semibold">
+            <Lock className="h-4 w-4 text-muted-foreground" />
+            RemoteDesk is locked
+          </h1>
           <p className="text-sm text-muted-foreground">
             Enter your passphrase to unlock your saved connections.
           </p>

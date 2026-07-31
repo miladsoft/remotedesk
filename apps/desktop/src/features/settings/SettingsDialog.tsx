@@ -118,7 +118,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[85vh] max-w-lg overflow-y-auto">
+      <DialogContent className="max-h-[85vh] sm:max-w-lg overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Settings</DialogTitle>
           <DialogDescription>
@@ -151,7 +151,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                 : "No lock passphrase is set. Consider setting one — it's required before any stored password can be revealed."}
             </p>
             <div className="flex items-end gap-2">
-              <div className="flex flex-1 flex-col gap-1.5">
+              <div className="flex min-w-0 flex-1 flex-col gap-1.5">
                 <Label htmlFor="new-passphrase">
                   {passphraseSet ? "New passphrase" : "Set a passphrase"}
                 </Label>
@@ -204,7 +204,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
               Include stored passwords in the backup
             </label>
             <div className="flex items-end gap-2">
-              <div className="flex flex-1 flex-col gap-1.5">
+              <div className="flex min-w-0 flex-1 flex-col gap-1.5">
                 <Label htmlFor="export-passphrase">Backup passphrase</Label>
                 <Input
                   id="export-passphrase"
@@ -224,7 +224,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
           <section className="flex flex-col gap-3">
             <h3 className="text-sm font-medium">Import backup</h3>
             <div className="flex items-end gap-2">
-              <div className="flex flex-1 flex-col gap-1.5">
+              <div className="flex min-w-0 flex-1 flex-col gap-1.5">
                 <Label htmlFor="import-passphrase">Backup passphrase</Label>
                 <Input
                   id="import-passphrase"

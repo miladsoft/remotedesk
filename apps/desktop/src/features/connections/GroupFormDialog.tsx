@@ -72,7 +72,7 @@ export function GroupFormDialog({ open, onOpenChange, group }: GroupFormDialogPr
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-sm">
+      <DialogContent>
         <DialogHeader>
           <DialogTitle>{group ? "Edit group" : "New group"}</DialogTitle>
         </DialogHeader>
