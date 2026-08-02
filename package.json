@@ -1,7 +1,7 @@
 {
   "name": "remotedesk",
   "private": true,
-  "version": "0.1.4",
+  "version": "0.1.5",
   "scripts": {
     "dev": "pnpm --filter @remotedesk/desktop tauri dev",
     "build": "pnpm --filter @remotedesk/desktop tauri build",
