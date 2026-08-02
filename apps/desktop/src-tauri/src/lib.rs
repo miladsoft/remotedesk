@@ -9,8 +9,7 @@ use std::sync::Mutex;
 
 use tauri::Manager;
 
-use application::LockService;
-use infrastructure::ftp::FtpSessionState;
+use application::{FtpSessionState, LockService};
 use infrastructure::pty::SessionState;
 use state::{DbState, LockState};
 

@@ -13,6 +13,7 @@ import {
   KeyRound,
   ServerOff,
   Plug,
+  FolderOpen,
   PanelLeftClose,
   PanelLeftOpen,
 } from "lucide-react";
@@ -37,7 +38,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { cn } from "@/lib/utils";
 import { errorMessage } from "@/lib/tauri";
-import { connectToServer } from "@/lib/connect";
+import { connectToServer, openFileManager } from "@/lib/connect";
 import { useServerStore } from "@/stores/useServerStore";
 import { useUiStore } from "@/stores/useUiStore";
 import { ServerFormDialog } from "./ServerFormDialog";
@@ -217,6 +218,11 @@ function ServerRow({ server, groupName }: { server: Server; groupName?: string }
           <DropdownMenuItem onClick={() => void connectToServer(server)}>
             <Plug className="mr-2 h-4 w-4" /> Connect
           </DropdownMenuItem>
+          {server.protocol === "ssh" && (
+            <DropdownMenuItem onClick={() => void openFileManager(server)}>
+              <FolderOpen className="mr-2 h-4 w-4" /> Connect via SFTP
+            </DropdownMenuItem>
+          )}
           <DropdownMenuItem onClick={() => setEditingServer(true)}>
             <Pencil className="mr-2 h-4 w-4" /> Edit
           </DropdownMenuItem>

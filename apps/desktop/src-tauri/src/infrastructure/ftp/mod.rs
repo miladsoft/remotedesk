@@ -1,7 +1,6 @@
-use std::collections::HashMap;
 use std::io::{Read, Write};
 use std::path::Path;
-use std::sync::{Arc, Mutex};
+use std::sync::Mutex;
 
 use chrono::{DateTime, Utc};
 use suppaftp::list::File as FtpListFile;
@@ -11,21 +10,10 @@ use zeroize::Zeroizing;
 
 use crate::domain::{AppError, AppResult, FtpEntry};
 
-/// One in-flight FTP control connection. Wrapped in its own mutex (rather
-/// than relying solely on the outer session-map lock) so a long transfer
-/// only blocks other calls against *this* session, not the whole map.
+/// One in-flight FTP control connection. Wrapped in its own mutex so a long
+/// transfer only blocks other calls against *this* session, not others.
 pub struct FtpSessionHandle {
     stream: Mutex<FtpStream>,
-}
-
-pub type FtpSessionMap = Arc<Mutex<HashMap<String, Arc<FtpSessionHandle>>>>;
-
-pub struct FtpSessionState(pub FtpSessionMap);
-
-impl Default for FtpSessionState {
-    fn default() -> Self {
-        Self(Arc::new(Mutex::new(HashMap::new())))
-    }
 }
 
 pub struct ConnectOptions {
@@ -44,47 +32,31 @@ fn system_time_to_rfc3339(time: std::time::SystemTime) -> Option<String> {
     Some(DateTime::<Utc>::from(time).to_rfc3339())
 }
 
-pub fn connect(options: ConnectOptions) -> AppResult<Arc<FtpSessionHandle>> {
+pub fn connect(options: ConnectOptions) -> AppResult<FtpSessionHandle> {
     let addr = format!("{}:{}", options.host, options.port);
     let mut stream = FtpStream::connect(&addr).map_err(ftp_err)?;
     stream
         .login(options.username.as_str(), options.password.as_str())
         .map_err(ftp_err)?;
     stream.transfer_type(FileType::Binary).map_err(ftp_err)?;
-    Ok(Arc::new(FtpSessionHandle {
+    Ok(FtpSessionHandle {
         stream: Mutex::new(stream),
-    }))
+    })
 }
 
-pub fn disconnect(sessions: &FtpSessionMap, session_id: &str) -> AppResult<()> {
-    let handle = sessions
-        .lock()
-        .expect("ftp session map poisoned")
-        .remove(session_id)
-        .ok_or_else(|| AppError::NotFound(format!("ftp session '{session_id}'")))?;
+pub fn disconnect(handle: &FtpSessionHandle) -> AppResult<()> {
     let mut stream = handle.stream.lock().expect("ftp stream poisoned");
     // Best-effort: the remote end may already have closed the connection.
     let _ = stream.quit();
     Ok(())
 }
 
-fn get_handle(sessions: &FtpSessionMap, session_id: &str) -> AppResult<Arc<FtpSessionHandle>> {
-    sessions
-        .lock()
-        .expect("ftp session map poisoned")
-        .get(session_id)
-        .cloned()
-        .ok_or_else(|| AppError::NotFound(format!("ftp session '{session_id}'")))
-}
-
-pub fn pwd(sessions: &FtpSessionMap, session_id: &str) -> AppResult<String> {
-    let handle = get_handle(sessions, session_id)?;
+pub fn pwd(handle: &FtpSessionHandle) -> AppResult<String> {
     let mut stream = handle.stream.lock().expect("ftp stream poisoned");
     stream.pwd().map_err(ftp_err)
 }
 
-pub fn list_dir(sessions: &FtpSessionMap, session_id: &str, path: &str) -> AppResult<Vec<FtpEntry>> {
-    let handle = get_handle(sessions, session_id)?;
+pub fn list_dir(handle: &FtpSessionHandle, path: &str) -> AppResult<Vec<FtpEntry>> {
     let mut stream = handle.stream.lock().expect("ftp stream poisoned");
     let lines = stream.list(Some(path)).map_err(ftp_err)?;
     Ok(lines
@@ -100,26 +72,22 @@ pub fn list_dir(sessions: &FtpSessionMap, session_id: &str, path: &str) -> AppRe
         .collect())
 }
 
-pub fn mkdir(sessions: &FtpSessionMap, session_id: &str, path: &str) -> AppResult<()> {
-    let handle = get_handle(sessions, session_id)?;
+pub fn mkdir(handle: &FtpSessionHandle, path: &str) -> AppResult<()> {
     let mut stream = handle.stream.lock().expect("ftp stream poisoned");
     stream.mkdir(path).map_err(ftp_err)
 }
 
-pub fn rmdir(sessions: &FtpSessionMap, session_id: &str, path: &str) -> AppResult<()> {
-    let handle = get_handle(sessions, session_id)?;
+pub fn rmdir(handle: &FtpSessionHandle, path: &str) -> AppResult<()> {
     let mut stream = handle.stream.lock().expect("ftp stream poisoned");
     stream.rmdir(path).map_err(ftp_err)
 }
 
-pub fn delete_file(sessions: &FtpSessionMap, session_id: &str, path: &str) -> AppResult<()> {
-    let handle = get_handle(sessions, session_id)?;
+pub fn delete_file(handle: &FtpSessionHandle, path: &str) -> AppResult<()> {
     let mut stream = handle.stream.lock().expect("ftp stream poisoned");
     stream.rm(path).map_err(ftp_err)
 }
 
-pub fn rename(sessions: &FtpSessionMap, session_id: &str, from: &str, to: &str) -> AppResult<()> {
-    let handle = get_handle(sessions, session_id)?;
+pub fn rename(handle: &FtpSessionHandle, from: &str, to: &str) -> AppResult<()> {
     let mut stream = handle.stream.lock().expect("ftp stream poisoned");
     stream.rename(from, to).map_err(ftp_err)
 }
@@ -127,13 +95,11 @@ pub fn rename(sessions: &FtpSessionMap, session_id: &str, from: &str, to: &str) 
 /// Downloads `remote_path` to `local_path`, invoking `on_progress(transferred, total)`
 /// after every chunk. `total` is `None` when the server doesn't report a size.
 pub fn download(
-    sessions: &FtpSessionMap,
-    session_id: &str,
+    handle: &FtpSessionHandle,
     remote_path: &str,
     local_path: &Path,
     mut on_progress: impl FnMut(u64, Option<u64>),
 ) -> AppResult<()> {
-    let handle = get_handle(sessions, session_id)?;
     let mut stream = handle.stream.lock().expect("ftp stream poisoned");
     let total = stream.size(remote_path).ok().map(|s| s as u64);
 
@@ -162,8 +128,7 @@ pub fn download(
 /// Uploads `local_path` to `remote_path`, invoking `on_progress(transferred, total)`
 /// after every chunk.
 pub fn upload(
-    sessions: &FtpSessionMap,
-    session_id: &str,
+    handle: &FtpSessionHandle,
     local_path: &Path,
     remote_path: &str,
     mut on_progress: impl FnMut(u64, Option<u64>),
@@ -174,7 +139,6 @@ pub fn upload(
             "uploading a directory isn't supported yet — only single files".into(),
         ));
     }
-    let handle = get_handle(sessions, session_id)?;
     let mut stream = handle.stream.lock().expect("ftp stream poisoned");
 
     let total = Some(metadata.len());

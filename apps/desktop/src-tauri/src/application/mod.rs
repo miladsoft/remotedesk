@@ -9,7 +9,7 @@ pub mod tag_service;
 
 pub use connection_service::ConnectionService;
 pub use export_import_service::{ExportImportService, ImportSummary};
-pub use ftp_service::FtpService;
+pub use ftp_service::{FtpService, FtpSessionState};
 pub use group_service::GroupService;
 pub use local_fs_service::LocalFsService;
 pub use lock_service::LockService;

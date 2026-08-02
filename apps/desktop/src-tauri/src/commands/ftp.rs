@@ -1,9 +1,8 @@
 use tauri::ipc::Channel;
 use tauri::State;
 
-use crate::application::FtpService;
+use crate::application::{FtpService, FtpSessionState};
 use crate::domain::{AppResult, FtpEntry, FtpTransferEvent};
-use crate::infrastructure::ftp::FtpSessionState;
 use crate::state::{ensure_unlocked, DbState, LockState};
 
 #[tauri::command]
