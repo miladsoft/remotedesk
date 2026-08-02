@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import type { PtyEvent, Server } from "@remotedesk/types";
 import { api } from "@/lib/tauri";
+import { useWorkspaceStore } from "./useWorkspaceStore";
 
 export interface TerminalSession {
   id: string;
@@ -71,6 +72,7 @@ export const useTerminalStore = create<TerminalStore>((set, get) => ({
       ],
       activeSessionId: sessionId,
     }));
+    useWorkspaceStore.getState().addTab({ type: "terminal", id: sessionId });
 
     for (const event of backlog) emit(sessionId, event);
     return sessionId;
@@ -94,6 +96,7 @@ export const useTerminalStore = create<TerminalStore>((set, get) => ({
           : s.activeSessionId;
       return { sessions, activeSessionId };
     });
+    useWorkspaceStore.getState().removeTab({ type: "terminal", id: sessionId });
   },
 
   setActive: (sessionId) => set({ activeSessionId: sessionId }),

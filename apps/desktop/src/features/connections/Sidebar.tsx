@@ -47,6 +47,7 @@ import { GroupFormDialog } from "./GroupFormDialog";
 const PROTOCOL_LABELS: Record<Server["protocol"], string> = {
   ssh: "SSH",
   sftp: "SFTP",
+  ftp: "FTP",
   rdp: "RDP",
   vnc: "VNC",
   local_shell: "Shell",

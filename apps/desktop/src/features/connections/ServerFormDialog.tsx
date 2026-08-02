@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { Server, ServerInput } from "@remotedesk/types";
@@ -25,6 +25,7 @@ import {
 import { useServerStore } from "@/stores/useServerStore";
 import { errorMessage } from "@/lib/tauri";
 import {
+  DEFAULT_PORTS,
   defaultServerFormValues,
   serverFormSchema,
   type ServerFormValues,
@@ -88,6 +89,7 @@ export function ServerFormDialog({ open, onOpenChange, server }: ServerFormDialo
     control,
     reset,
     watch,
+    setValue,
     formState: { errors, isSubmitting },
   } = useForm<ServerFormValues>({
     resolver: zodResolver(serverFormSchema),
@@ -101,7 +103,26 @@ export function ServerFormDialog({ open, onOpenChange, server }: ServerFormDialo
     }
   }, [open, server, reset]);
 
+  const protocol = watch("protocol");
   const authenticationType = watch("authenticationType");
+  const previousProtocolRef = useRef(protocol);
+
+  // Only FTP is auth-restricted (no private keys, no agent) — nudge users
+  // back to password auth instead of letting them submit an unusable combo.
+  useEffect(() => {
+    const previousProtocol = previousProtocolRef.current;
+    previousProtocolRef.current = protocol;
+    if (previousProtocol === protocol) return;
+
+    const currentPort = watch("port");
+    if (currentPort === DEFAULT_PORTS[previousProtocol]) {
+      setValue("port", DEFAULT_PORTS[protocol]);
+    }
+    if (protocol === "ftp" && authenticationType !== "password") {
+      setValue("authenticationType", "password");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [protocol]);
 
   async function onSubmit(values: ServerFormValues) {
     setSubmitError(null);
@@ -172,6 +193,7 @@ export function ServerFormDialog({ open, onOpenChange, server }: ServerFormDialo
                     <SelectContent>
                       <SelectItem value="ssh">SSH</SelectItem>
                       <SelectItem value="sftp">SFTP</SelectItem>
+                      <SelectItem value="ftp">FTP</SelectItem>
                       <SelectItem value="rdp">RDP</SelectItem>
                       <SelectItem value="vnc">VNC</SelectItem>
                       <SelectItem value="local_shell">Local shell</SelectItem>
@@ -199,8 +221,12 @@ export function ServerFormDialog({ open, onOpenChange, server }: ServerFormDialo
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="password">Password</SelectItem>
-                      <SelectItem value="private_key">Private key</SelectItem>
-                      <SelectItem value="agent">SSH agent</SelectItem>
+                      {protocol !== "ftp" && (
+                        <>
+                          <SelectItem value="private_key">Private key</SelectItem>
+                          <SelectItem value="agent">SSH agent</SelectItem>
+                        </>
+                      )}
                     </SelectContent>
                   </Select>
                 )}
@@ -212,6 +238,9 @@ export function ServerFormDialog({ open, onOpenChange, server }: ServerFormDialo
                 <Label htmlFor="secret">
                   {authenticationType === "private_key" ? "Key passphrase" : "Password"}
                   {server && <span className="text-muted-foreground"> (leave blank to keep unchanged)</span>}
+                  {protocol === "ftp" && !server && (
+                    <span className="text-muted-foreground"> (leave blank for anonymous login)</span>
+                  )}
                 </Label>
                 <Input id="secret" type="password" {...register("secret")} />
               </div>

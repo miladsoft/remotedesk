@@ -7,7 +7,7 @@ import { Sidebar } from "@/features/connections/Sidebar";
 import { CommandPalette } from "@/features/connections/CommandPalette";
 import { SettingsDialog } from "@/features/settings/SettingsDialog";
 import { LockScreen } from "@/features/settings/LockScreen";
-import { TerminalDock } from "@/features/terminal/TerminalDock";
+import { WorkspaceDock } from "@/features/workspace/WorkspaceDock";
 import { useLockStore } from "@/stores/useLockStore";
 import { useServerStore } from "@/stores/useServerStore";
 import { useUpdateStore } from "@/stores/useUpdateStore";
@@ -59,7 +59,7 @@ function App() {
         <div className="flex flex-1 overflow-hidden">
           <Sidebar />
           <main className="min-w-0 flex-1 overflow-hidden">
-            <TerminalDock />
+            <WorkspaceDock />
           </main>
         </div>
       </div>

@@ -24,6 +24,8 @@ pub enum AppError {
     Io(#[from] std::io::Error),
     #[error("session error: {0}")]
     Session(String),
+    #[error("ftp error: {0}")]
+    Ftp(String),
 }
 
 // Tauri requires command error types to be `Serialize`; the frontend only ever

@@ -10,6 +10,7 @@ use std::sync::Mutex;
 use tauri::Manager;
 
 use application::LockService;
+use infrastructure::ftp::FtpSessionState;
 use infrastructure::pty::SessionState;
 use state::{DbState, LockState};
 
@@ -55,6 +56,7 @@ pub fn run() {
             app.manage(DbState(Mutex::new(conn)));
             app.manage(LockState(Mutex::new(starts_locked)));
             app.manage(SessionState::default());
+            app.manage(FtpSessionState::default());
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
@@ -85,6 +87,20 @@ pub fn run() {
             commands::session::write_to_session,
             commands::session::resize_session,
             commands::session::close_session,
+            commands::ftp::ftp_connect,
+            commands::ftp::ftp_disconnect,
+            commands::ftp::ftp_pwd,
+            commands::ftp::ftp_list,
+            commands::ftp::ftp_mkdir,
+            commands::ftp::ftp_rmdir,
+            commands::ftp::ftp_delete,
+            commands::ftp::ftp_rename,
+            commands::ftp::ftp_download,
+            commands::ftp::ftp_upload,
+            commands::local_fs::local_list_dir,
+            commands::local_fs::local_mkdir,
+            commands::local_fs::local_delete,
+            commands::local_fs::local_rename,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

@@ -8,6 +8,7 @@ use super::error::AppError;
 pub enum Protocol {
     Ssh,
     Sftp,
+    Ftp,
     Rdp,
     Vnc,
     LocalShell,
@@ -19,6 +20,7 @@ impl Protocol {
         match self {
             Protocol::Ssh => "ssh",
             Protocol::Sftp => "sftp",
+            Protocol::Ftp => "ftp",
             Protocol::Rdp => "rdp",
             Protocol::Vnc => "vnc",
             Protocol::LocalShell => "local_shell",
@@ -30,6 +32,7 @@ impl Protocol {
         match value {
             "ssh" => Ok(Protocol::Ssh),
             "sftp" => Ok(Protocol::Sftp),
+            "ftp" => Ok(Protocol::Ftp),
             "rdp" => Ok(Protocol::Rdp),
             "vnc" => Ok(Protocol::Vnc),
             "local_shell" => Ok(Protocol::LocalShell),

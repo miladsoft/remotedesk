@@ -1,7 +1,7 @@
 // Shared TypeScript contracts for the Tauri IPC boundary.
 // Keep in sync with the Rust structs in apps/desktop/src-tauri/src/domain.
 
-export type Protocol = "ssh" | "sftp" | "rdp" | "vnc" | "local_shell" | "custom_command";
+export type Protocol = "ssh" | "sftp" | "ftp" | "rdp" | "vnc" | "local_shell" | "custom_command";
 
 export type AuthType = "password" | "private_key" | "agent";
 
@@ -90,3 +90,29 @@ export interface ImportSummary {
 
 /** Streamed from Rust over a Tauri Channel while a terminal session is open. */
 export type PtyEvent = { type: "data"; data: string } | { type: "exited"; code: number };
+
+export interface FtpEntry {
+  name: string;
+  isDir: boolean;
+  size: number;
+  modified: string | null;
+}
+
+/** Streamed from Rust over a Tauri Channel while an upload/download runs. */
+export type FtpTransferEvent =
+  | { type: "progress"; transferred: number; total: number | null }
+  | { type: "completed" }
+  | { type: "failed"; message: string };
+
+export interface LocalEntry {
+  name: string;
+  isDir: boolean;
+  size: number;
+  modified: string | null;
+}
+
+export interface LocalListing {
+  path: string;
+  parent: string | null;
+  entries: LocalEntry[];
+}

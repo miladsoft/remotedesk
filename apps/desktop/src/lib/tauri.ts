@@ -1,7 +1,10 @@
 import { Channel, invoke } from "@tauri-apps/api/core";
 import type {
   ExportOptions,
+  FtpEntry,
+  FtpTransferEvent,
   ImportSummary,
+  LocalListing,
   LockStatus,
   PtyEvent,
   Server,
@@ -72,6 +75,44 @@ export const api = {
     resize: (sessionId: string, cols: number, rows: number) =>
       invoke<void>("resize_session", { sessionId, cols, rows }),
     close: (sessionId: string) => invoke<void>("close_session", { sessionId }),
+  },
+  ftp: {
+    connect: (serverId: string) => invoke<string>("ftp_connect", { serverId }),
+    disconnect: (sessionId: string) => invoke<void>("ftp_disconnect", { sessionId }),
+    pwd: (sessionId: string) => invoke<string>("ftp_pwd", { sessionId }),
+    list: (sessionId: string, path: string) =>
+      invoke<FtpEntry[]>("ftp_list", { sessionId, path }),
+    mkdir: (sessionId: string, path: string) => invoke<void>("ftp_mkdir", { sessionId, path }),
+    rmdir: (sessionId: string, path: string) => invoke<void>("ftp_rmdir", { sessionId, path }),
+    delete: (sessionId: string, path: string) => invoke<void>("ftp_delete", { sessionId, path }),
+    rename: (sessionId: string, from: string, to: string) =>
+      invoke<void>("ftp_rename", { sessionId, from, to }),
+    download: (
+      sessionId: string,
+      remotePath: string,
+      localPath: string,
+      onEvent: (event: FtpTransferEvent) => void,
+    ) => {
+      const channel = new Channel<FtpTransferEvent>();
+      channel.onmessage = onEvent;
+      return invoke<string>("ftp_download", { sessionId, remotePath, localPath, onEvent: channel });
+    },
+    upload: (
+      sessionId: string,
+      localPath: string,
+      remotePath: string,
+      onEvent: (event: FtpTransferEvent) => void,
+    ) => {
+      const channel = new Channel<FtpTransferEvent>();
+      channel.onmessage = onEvent;
+      return invoke<string>("ftp_upload", { sessionId, localPath, remotePath, onEvent: channel });
+    },
+  },
+  local: {
+    listDir: (path?: string) => invoke<LocalListing>("local_list_dir", { path: path ?? null }),
+    mkdir: (path: string) => invoke<void>("local_mkdir", { path }),
+    delete: (path: string, isDir: boolean) => invoke<void>("local_delete", { path, isDir }),
+    rename: (from: string, to: string) => invoke<void>("local_rename", { from, to }),
   },
 };
 
