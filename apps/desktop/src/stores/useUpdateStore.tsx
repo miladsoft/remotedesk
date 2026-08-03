@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { check, type Update } from "@tauri-apps/plugin-updater";
 import { relaunch } from "@tauri-apps/plugin-process";
 import { toast } from "sonner";
+import { UpdateReleaseNotes } from "@/components/UpdateReleaseNotes";
 
 interface UpdateStore {
   checking: boolean;
@@ -26,7 +27,7 @@ export const useUpdateStore = create<UpdateStore>((set, get) => ({
         toast(`Update available: v${update.version}`, {
           id: "update-available",
           duration: Infinity,
-          description: update.body || undefined,
+          description: update.body ? <UpdateReleaseNotes body={update.body} /> : undefined,
           action: {
             label: "Install",
             onClick: () => void get().installUpdate(),
