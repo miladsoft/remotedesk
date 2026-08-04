@@ -47,6 +47,8 @@ struct ExportedServer {
     terminal_profile_id: Option<String>,
     is_favorite: bool,
     tag_ids: Vec<String>,
+    #[serde(default)]
+    custom_command: Option<String>,
 }
 
 #[derive(Serialize)]
@@ -105,6 +107,7 @@ impl ExportImportService {
                 terminal_profile_id: server.terminal_profile_id,
                 is_favorite: server.is_favorite,
                 tag_ids: server.tag_ids,
+                custom_command: server.custom_command,
             });
         }
 
@@ -255,6 +258,7 @@ impl ExportImportService {
                     .iter()
                     .filter_map(|old| tag_id_map.get(old).cloned())
                     .collect(),
+                custom_command: exported.custom_command.clone(),
                 created_at: now.clone(),
                 updated_at: now.clone(),
             };
@@ -315,6 +319,7 @@ mod tests {
                 terminal_profile_id: None,
                 is_favorite: true,
                 tag_ids: vec![tag.id.clone()],
+                custom_command: None,
             },
         )
         .unwrap();

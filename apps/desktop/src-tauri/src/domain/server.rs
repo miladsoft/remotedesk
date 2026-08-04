@@ -122,6 +122,8 @@ pub struct Server {
     pub terminal_profile_id: Option<String>,
     pub is_favorite: bool,
     pub tag_ids: Vec<String>,
+    /// Shell command line to run for `Protocol::CustomCommand` servers.
+    pub custom_command: Option<String>,
     pub created_at: String,
     pub updated_at: String,
 }
@@ -147,4 +149,5 @@ pub struct ServerInput {
     pub terminal_profile_id: Option<String>,
     pub is_favorite: bool,
     pub tag_ids: Vec<String>,
+    pub custom_command: Option<String>,
 }

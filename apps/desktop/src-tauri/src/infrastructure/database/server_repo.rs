@@ -46,8 +46,8 @@ impl ServerRepository {
                 id, name, description, hostname, port, protocol, username,
                 authentication_type, credential_reference, private_key_path,
                 group_id, jump_server_id, working_directory, terminal_profile_id,
-                is_favorite, created_at, updated_at
-            ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17)",
+                is_favorite, custom_command, created_at, updated_at
+            ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17, ?18)",
             params![
                 server.id,
                 server.name,
@@ -64,6 +64,7 @@ impl ServerRepository {
                 server.working_directory,
                 server.terminal_profile_id,
                 server.is_favorite,
+                server.custom_command,
                 server.created_at,
                 server.updated_at,
             ],
@@ -79,7 +80,7 @@ impl ServerRepository {
                 username = ?7, authentication_type = ?8, credential_reference = ?9,
                 private_key_path = ?10, group_id = ?11, jump_server_id = ?12,
                 working_directory = ?13, terminal_profile_id = ?14, is_favorite = ?15,
-                updated_at = ?16
+                custom_command = ?16, updated_at = ?17
              WHERE id = ?1",
             params![
                 server.id,
@@ -97,6 +98,7 @@ impl ServerRepository {
                 server.working_directory,
                 server.terminal_profile_id,
                 server.is_favorite,
+                server.custom_command,
                 server.updated_at,
             ],
         )?;
@@ -156,6 +158,7 @@ fn row_to_server(row: &Row) -> rusqlite::Result<Server> {
         terminal_profile_id: row.get("terminal_profile_id")?,
         is_favorite: row.get("is_favorite")?,
         tag_ids: Vec::new(),
+        custom_command: row.get("custom_command")?,
         created_at: row.get("created_at")?,
         updated_at: row.get("updated_at")?,
     })
@@ -204,6 +207,7 @@ mod tests {
             terminal_profile_id: None,
             is_favorite: false,
             tag_ids: Vec::new(),
+            custom_command: None,
             created_at: "2026-01-01T00:00:00Z".to_string(),
             updated_at: "2026-01-01T00:00:00Z".to_string(),
         }

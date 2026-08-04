@@ -140,6 +140,7 @@ mod tests {
             terminal_profile_id: None,
             is_favorite: false,
             tag_ids: Vec::new(),
+            custom_command: None,
             created_at: "now".into(),
             updated_at: "now".into(),
         };

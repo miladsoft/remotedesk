@@ -42,6 +42,8 @@ impl Default for SessionState {
 pub struct SpawnOptions {
     pub program: String,
     pub args: Vec<String>,
+    /// Working directory for the spawned process, if the caller has one.
+    pub cwd: Option<String>,
     /// Written to the pty (followed by a newline) the first time a
     /// password/passphrase prompt is seen in the output, then zeroized.
     /// Never passed via argv or environment variables.
@@ -69,6 +71,9 @@ pub fn spawn_session(
 
     let mut cmd = CommandBuilder::new(&options.program);
     cmd.args(&options.args);
+    if let Some(cwd) = &options.cwd {
+        cmd.cwd(cwd);
+    }
 
     let child = pair.slave.spawn_command(cmd).map_err(pty_err)?;
     // Drop our copy of the slave side so the master's reader observes EOF

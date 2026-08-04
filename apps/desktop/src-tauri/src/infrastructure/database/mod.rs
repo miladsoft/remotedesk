@@ -16,9 +16,10 @@ use rusqlite_migration::{Migrations, M};
 use crate::domain::AppResult;
 
 fn migrations() -> Migrations<'static> {
-    Migrations::new(vec![M::up(include_str!(
-        "../../../migrations/0001_init.sql"
-    ))])
+    Migrations::new(vec![
+        M::up(include_str!("../../../migrations/0001_init.sql")),
+        M::up(include_str!("../../../migrations/0002_custom_command.sql")),
+    ])
 }
 
 /// Opens (creating if needed) the SQLite database at `path` and brings it up

@@ -46,6 +46,7 @@ impl ConnectionService {
             terminal_profile_id: input.terminal_profile_id,
             is_favorite: input.is_favorite,
             tag_ids: input.tag_ids,
+            custom_command: input.custom_command,
             created_at: now.clone(),
             updated_at: now,
         };
@@ -94,6 +95,7 @@ impl ConnectionService {
             terminal_profile_id: input.terminal_profile_id,
             is_favorite: input.is_favorite,
             tag_ids: input.tag_ids,
+            custom_command: input.custom_command,
             created_at: existing.created_at,
             updated_at: Utc::now().to_rfc3339(),
         };
@@ -145,14 +147,29 @@ fn store_secret(
 }
 
 fn validate(input: &ServerInput) -> AppResult<()> {
+    use crate::domain::Protocol;
+
     if input.name.trim().is_empty() {
         return Err(AppError::Validation("name must not be empty".into()));
     }
-    if input.hostname.trim().is_empty() {
-        return Err(AppError::Validation("hostname must not be empty".into()));
+    let needs_network_address = !matches!(
+        input.protocol,
+        Protocol::LocalShell | Protocol::CustomCommand
+    );
+    if needs_network_address {
+        if input.hostname.trim().is_empty() {
+            return Err(AppError::Validation("hostname must not be empty".into()));
+        }
+        if input.port < 1 || input.port > 65535 {
+            return Err(AppError::Validation("port must be between 1 and 65535".into()));
+        }
     }
-    if input.port < 1 || input.port > 65535 {
-        return Err(AppError::Validation("port must be between 1 and 65535".into()));
+    if input.protocol == Protocol::CustomCommand
+        && input.custom_command.as_deref().unwrap_or("").trim().is_empty()
+    {
+        return Err(AppError::Validation(
+            "custom_command must not be empty for the custom command protocol".into(),
+        ));
     }
     Ok(())
 }
@@ -180,6 +197,7 @@ mod tests {
             terminal_profile_id: None,
             is_favorite: false,
             tag_ids: Vec::new(),
+            custom_command: None,
         }
     }
 
