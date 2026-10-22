@@ -1,7 +1,8 @@
-use tauri::State;
+use tauri::{AppHandle, State};
 
 use crate::application::ConnectionService;
 use crate::domain::{AppResult, Server, ServerInput};
+use crate::infrastructure::clipboard;
 use crate::state::{ensure_unlocked, DbState, LockState};
 
 #[tauri::command]
@@ -72,4 +73,22 @@ pub fn reveal_credential(
         return Err(crate::domain::AppError::IncorrectPassphrase);
     }
     ConnectionService::reveal_credential(&conn, &id)
+}
+
+/// Copies a server's stored password (or key passphrase) to the system
+/// clipboard without it ever reaching the webview. Gated on the app being
+/// unlocked; the clipboard is wiped again after a short delay.
+#[tauri::command]
+pub fn copy_credential(
+    app: AppHandle,
+    db: State<DbState>,
+    lock: State<LockState>,
+    id: String,
+) -> AppResult<()> {
+    ensure_unlocked(&lock)?;
+    let secret = {
+        let conn = db.0.lock().expect("db mutex poisoned");
+        ConnectionService::secret(&conn, &id)?
+    };
+    clipboard::copy_secret(&app, secret)
 }

@@ -106,8 +106,9 @@ export function ServerFormDialog({ open, onOpenChange, server }: ServerFormDialo
   const protocol = watch("protocol");
   const authenticationType = watch("authenticationType");
   const previousProtocolRef = useRef(protocol);
+  const passwordOnly = protocol === "ftp" || protocol === "rdp";
 
-  // Only FTP is auth-restricted (no private keys, no agent) — nudge users
+  // FTP and RDP are auth-restricted (no private keys, no agent) — nudge users
   // back to password auth instead of letting them submit an unusable combo.
   useEffect(() => {
     const previousProtocol = previousProtocolRef.current;
@@ -118,7 +119,7 @@ export function ServerFormDialog({ open, onOpenChange, server }: ServerFormDialo
     if (currentPort === DEFAULT_PORTS[previousProtocol]) {
       setValue("port", DEFAULT_PORTS[protocol]);
     }
-    if (protocol === "ftp" && authenticationType !== "password") {
+    if (passwordOnly && authenticationType !== "password") {
       setValue("authenticationType", "password");
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -206,7 +207,11 @@ export function ServerFormDialog({ open, onOpenChange, server }: ServerFormDialo
 
             <div className="flex flex-col gap-1.5">
               <Label htmlFor="username">Username</Label>
-              <Input id="username" {...register("username")} />
+              <Input
+                id="username"
+                placeholder={protocol === "rdp" ? "DOMAIN\\user or user" : undefined}
+                {...register("username")}
+              />
             </div>
 
             <div className="flex flex-col gap-1.5">
@@ -221,7 +226,7 @@ export function ServerFormDialog({ open, onOpenChange, server }: ServerFormDialo
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="password">Password</SelectItem>
-                      {protocol !== "ftp" && (
+                      {!passwordOnly && (
                         <>
                           <SelectItem value="private_key">Private key</SelectItem>
                           <SelectItem value="agent">SSH agent</SelectItem>

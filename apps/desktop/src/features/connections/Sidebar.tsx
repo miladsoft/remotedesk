@@ -11,6 +11,7 @@ import {
   Pencil,
   Trash2,
   KeyRound,
+  Copy,
   ServerOff,
   Plug,
   FolderOpen,
@@ -38,7 +39,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { cn } from "@/lib/utils";
 import { errorMessage } from "@/lib/tauri";
-import { connectToServer, openFileManager } from "@/lib/connect";
+import { connectToServer, copyServerPassword, credentialLabel, openFileManager } from "@/lib/connect";
 import { useServerStore } from "@/stores/useServerStore";
 import { useUiStore } from "@/stores/useUiStore";
 import { ServerFormDialog } from "./ServerFormDialog";
@@ -227,9 +228,14 @@ function ServerRow({ server, groupName }: { server: Server; groupName?: string }
             <Pencil className="mr-2 h-4 w-4" /> Edit
           </DropdownMenuItem>
           {server.credentialReference && (
-            <DropdownMenuItem onClick={() => setRevealOpen(true)}>
-              <KeyRound className="mr-2 h-4 w-4" /> Reveal credential
-            </DropdownMenuItem>
+            <>
+              <DropdownMenuItem onClick={() => void copyServerPassword(server)}>
+                <Copy className="mr-2 h-4 w-4" /> Copy {credentialLabel(server).toLowerCase()}
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setRevealOpen(true)}>
+                <KeyRound className="mr-2 h-4 w-4" /> Reveal credential
+              </DropdownMenuItem>
+            </>
           )}
           <DropdownMenuItem variant="destructive" onClick={() => setDeleting(true)}>
             <Trash2 className="mr-2 h-4 w-4" /> Delete

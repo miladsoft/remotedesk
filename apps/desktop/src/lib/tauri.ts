@@ -7,6 +7,7 @@ import type {
   LocalListing,
   LockStatus,
   PtyEvent,
+  RdpLaunch,
   Server,
   ServerGroup,
   ServerInput,
@@ -15,7 +16,9 @@ import type {
 
 // Thin typed wrappers around every Tauri command exposed by the Rust core.
 // The frontend never sees secrets except via `revealCredential`, which
-// itself requires the app-lock passphrase to be re-entered.
+// itself requires the app-lock passphrase to be re-entered. `copyCredential`,
+// `sendCredential` and `rdp.connect` hand a secret to the clipboard, a pty or
+// an RDP client entirely on the Rust side.
 
 export const api = {
   servers: {
@@ -28,6 +31,11 @@ export const api = {
     delete: (id: string) => invoke<void>("delete_server", { id }),
     revealCredential: (id: string, passphrase: string) =>
       invoke<string>("reveal_credential", { id, passphrase }),
+    /** Copies the stored password to the system clipboard (auto-cleared after 30s). */
+    copyCredential: (id: string) => invoke<void>("copy_credential", { id }),
+  },
+  rdp: {
+    connect: (serverId: string) => invoke<RdpLaunch>("rdp_connect", { serverId }),
   },
   groups: {
     list: () => invoke<ServerGroup[]>("list_groups"),
@@ -72,6 +80,9 @@ export const api = {
     },
     write: (sessionId: string, data: string) =>
       invoke<void>("write_to_session", { sessionId, data }),
+    /** Types the server's stored password into the session (no Enter). */
+    sendCredential: (serverId: string, sessionId: string) =>
+      invoke<void>("send_credential_to_session", { serverId, sessionId }),
     resize: (sessionId: string, cols: number, rows: number) =>
       invoke<void>("resize_session", { sessionId, cols, rows }),
     close: (sessionId: string) => invoke<void>("close_session", { sessionId }),

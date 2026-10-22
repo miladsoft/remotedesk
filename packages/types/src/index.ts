@@ -116,3 +116,11 @@ export interface LocalListing {
   parent: string | null;
   entries: LocalEntry[];
 }
+
+/** Result of handing an RDP server to the platform's native Remote Desktop client. */
+export interface RdpLaunch {
+  /** Human-readable name of the client that was launched. */
+  client: string;
+  /** True when the password was copied to the clipboard for the user to paste. */
+  passwordCopied: boolean;
+}

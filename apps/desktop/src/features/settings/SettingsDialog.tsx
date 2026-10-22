@@ -15,6 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
+import { Switch } from "@/components/ui/switch";
 import {
   Select,
   SelectContent,
@@ -24,6 +25,12 @@ import {
 } from "@/components/ui/select";
 import { useLockStore } from "@/stores/useLockStore";
 import { useUiStore, type ThemeMode } from "@/stores/useUiStore";
+import {
+  MAX_TERMINAL_FONT_SIZE,
+  MIN_TERMINAL_FONT_SIZE,
+  useTerminalSettingsStore,
+  type RightClickAction,
+} from "@/stores/useTerminalSettingsStore";
 import { api, errorMessage } from "@/lib/tauri";
 
 interface SettingsDialogProps {
@@ -39,6 +46,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
   const setIdleTimeoutMinutes = useLockStore((s) => s.setIdleTimeoutMinutes);
   const theme = useUiStore((s) => s.theme);
   const setTheme = useUiStore((s) => s.setTheme);
+  const terminal = useTerminalSettingsStore();
 
   const [newPassphrase, setNewPassphrase] = useState("");
   const [savingPassphrase, setSavingPassphrase] = useState(false);
@@ -128,7 +136,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
 
         <div className="flex min-h-0 flex-1 flex-col gap-6 overflow-y-auto p-4">
           <DialogDescription>
-            Manage app lock, appearance, and encrypted backups.
+            Manage appearance, terminal behaviour, app lock, and encrypted backups.
           </DialogDescription>
 
           <section className="flex flex-col gap-3">
@@ -143,6 +151,68 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                 <SelectItem value="dark">Dark</SelectItem>
               </SelectContent>
             </Select>
+          </section>
+
+          <Separator />
+
+          <section className="flex flex-col gap-3">
+            <h3 className="text-sm font-medium">Terminal</h3>
+            <div className="flex items-center justify-between gap-4">
+              <Label htmlFor="terminal-font-size">Font size</Label>
+              <Input
+                id="terminal-font-size"
+                type="number"
+                min={MIN_TERMINAL_FONT_SIZE}
+                max={MAX_TERMINAL_FONT_SIZE}
+                className="w-24"
+                value={terminal.fontSize}
+                onChange={(e) => {
+                  const size = Number(e.target.value);
+                  if (Number.isFinite(size) && size > 0) terminal.setFontSize(size);
+                }}
+              />
+            </div>
+            <div className="flex items-center justify-between gap-4">
+              <Label>Right-click</Label>
+              <Select
+                value={terminal.rightClickAction}
+                onValueChange={(v) => terminal.setRightClickAction(v as RightClickAction)}
+              >
+                <SelectTrigger className="w-56">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="menu">Show menu</SelectItem>
+                  <SelectItem value="copyPaste">Copy selection / paste</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex items-center justify-between gap-4">
+              <div className="flex flex-col gap-0.5">
+                <Label htmlFor="terminal-copy-on-select">Copy on select</Label>
+                <span className="text-xs text-muted-foreground">
+                  Selected text is copied to the clipboard automatically.
+                </span>
+              </div>
+              <Switch
+                id="terminal-copy-on-select"
+                checked={terminal.copyOnSelect}
+                onCheckedChange={terminal.setCopyOnSelect}
+              />
+            </div>
+            <div className="flex items-center justify-between gap-4">
+              <div className="flex flex-col gap-0.5">
+                <Label htmlFor="terminal-confirm-paste">Confirm multi-line paste</Label>
+                <span className="text-xs text-muted-foreground">
+                  Ask before pasting several lines into a shell that would run them immediately.
+                </span>
+              </div>
+              <Switch
+                id="terminal-confirm-paste"
+                checked={terminal.confirmMultilinePaste}
+                onCheckedChange={terminal.setConfirmMultilinePaste}
+              />
+            </div>
           </section>
 
           <Separator />

@@ -1,7 +1,7 @@
 use chrono::Utc;
 use rusqlite::Connection;
 use uuid::Uuid;
-use zeroize::Zeroize;
+use zeroize::{Zeroize, Zeroizing};
 
 use crate::domain::{AppError, AppResult, Server, ServerInput};
 use crate::infrastructure::database::ServerRepository;
@@ -116,13 +116,20 @@ impl ConnectionService {
     /// Resolves the stored secret for a server. Callers must have already
     /// verified the app-lock passphrase before invoking this.
     pub fn reveal_credential(conn: &Connection, id: &str) -> AppResult<String> {
+        Ok(Self::secret(conn, id)?.to_string())
+    }
+
+    /// Resolves the stored secret for a server without ever handing it to the
+    /// frontend — used by backend-only consumers such as clipboard copy and
+    /// RDP launch. Errors with `NotFound` if the server has no stored secret.
+    pub fn secret(conn: &Connection, id: &str) -> AppResult<Zeroizing<String>> {
         let server = ServerRepository::get(conn, id)?;
         let reference = server
             .credential_reference
             .ok_or_else(|| AppError::NotFound(format!("credential for server '{id}'")))?;
         let account = KeychainService::account_from_reference(&reference)
             .ok_or_else(|| AppError::Keychain("malformed credential reference".into()))?;
-        Ok(KeychainService::get_secret(account)?.to_string())
+        KeychainService::get_secret(account)
     }
 }
 

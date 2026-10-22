@@ -3,11 +3,167 @@
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/png" href="/rd.png" />
+    <link rel="preload" as="image" href="/rd.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>RemoteDesk</title>
+    <script>
+      // Apply the saved theme before first paint so neither the splash nor
+      // the app flashes the wrong colour scheme (ThemeEffect takes over later).
+      (function () {
+        try {
+          var theme = localStorage.getItem("theme") || "system";
+          var dark =
+            theme === "dark" ||
+            (theme === "system" && window.matchMedia("(prefers-color-scheme: dark)").matches);
+          document.documentElement.classList.toggle("dark", dark);
+        } catch (e) {}
+      })();
+    </script>
+    <style>
+      /* Splash screen: plain CSS so it renders on the very first frame,
+         before any JS or Tailwind has loaded. Hidden by src/lib/splash.ts. */
+      #splash {
+        --splash-bg: radial-gradient(120% 90% at 50% 38%, #ffffff 0%, #eef2f7 55%, #e2e8f0 100%);
+        --splash-title: #0f172a;
+        --splash-muted: #64748b;
+        --splash-track: rgba(15, 23, 42, 0.08);
+        --splash-bar: #e0502a;
+        --splash-glow: rgba(224, 80, 42, 0.22);
+        position: fixed;
+        inset: 0;
+        z-index: 2147483647;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        background: var(--splash-bg);
+        font-family: "Geist Variable", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        -webkit-font-smoothing: antialiased;
+        user-select: none;
+        -webkit-user-select: none;
+        cursor: default;
+        transition: opacity 420ms ease, visibility 0s linear 420ms;
+      }
+      .dark #splash {
+        --splash-bg: radial-gradient(120% 90% at 50% 38%, #141a2a 0%, #0a0e18 55%, #05070d 100%);
+        --splash-title: #f8fafc;
+        --splash-muted: #8b95a7;
+        --splash-track: rgba(255, 255, 255, 0.08);
+        --splash-bar: #f26a3d;
+        --splash-glow: rgba(242, 106, 61, 0.26);
+      }
+      #splash.splash-hide {
+        opacity: 0;
+        visibility: hidden;
+        pointer-events: none;
+      }
+      .splash-logo {
+        position: relative;
+        width: 112px;
+        height: 112px;
+        animation: splash-pop 700ms cubic-bezier(0.16, 1, 0.3, 1) both;
+        transition: transform 420ms cubic-bezier(0.16, 1, 0.3, 1);
+      }
+      #splash.splash-hide .splash-logo {
+        transform: scale(1.06);
+      }
+      .splash-logo::before {
+        content: "";
+        position: absolute;
+        inset: -28px;
+        border-radius: 50%;
+        background: radial-gradient(circle, var(--splash-glow) 0%, transparent 68%);
+        animation: splash-breathe 2.4s ease-in-out 700ms infinite;
+      }
+      .splash-logo img {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        /* drop-shadow follows the icon's own (circular) alpha, unlike box-shadow. */
+        filter: drop-shadow(0 10px 22px rgba(0, 0, 0, 0.32)) drop-shadow(0 1px 2px rgba(0, 0, 0, 0.2));
+        -webkit-user-drag: none;
+      }
+      .splash-title {
+        margin: 28px 0 0;
+        font-size: 26px;
+        font-weight: 600;
+        letter-spacing: -0.02em;
+        color: var(--splash-title);
+        animation: splash-rise 600ms cubic-bezier(0.16, 1, 0.3, 1) 140ms both;
+      }
+      .splash-tagline {
+        margin: 6px 0 0;
+        font-size: 13px;
+        color: var(--splash-muted);
+        animation: splash-rise 600ms cubic-bezier(0.16, 1, 0.3, 1) 240ms both;
+      }
+      .splash-progress {
+        position: relative;
+        width: 148px;
+        height: 3px;
+        margin-top: 30px;
+        overflow: hidden;
+        border-radius: 999px;
+        background: var(--splash-track);
+        animation: splash-fade 500ms ease 380ms both;
+      }
+      .splash-progress::after {
+        content: "";
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        width: 40%;
+        border-radius: inherit;
+        background: linear-gradient(90deg, transparent, var(--splash-bar), transparent);
+        animation: splash-slide 1.25s cubic-bezier(0.65, 0, 0.35, 1) infinite;
+      }
+      .splash-version {
+        position: absolute;
+        bottom: 22px;
+        font-size: 11px;
+        letter-spacing: 0.04em;
+        color: var(--splash-muted);
+        opacity: 0.8;
+        font-variant-numeric: tabular-nums;
+        animation: splash-fade 500ms ease 380ms both;
+      }
+      @keyframes splash-pop {
+        from { opacity: 0; transform: scale(0.82); }
+        to { opacity: 1; transform: scale(1); }
+      }
+      @keyframes splash-rise {
+        from { opacity: 0; transform: translateY(8px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+      @keyframes splash-fade {
+        from { opacity: 0; }
+        to { opacity: 1; }
+      }
+      @keyframes splash-breathe {
+        0%, 100% { opacity: 0.55; transform: scale(0.94); }
+        50% { opacity: 1; transform: scale(1.04); }
+      }
+      @keyframes splash-slide {
+        from { left: -40%; }
+        to { left: 100%; }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        #splash, #splash *, #splash *::before, #splash *::after {
+          animation: none !important;
+          transition: opacity 200ms ease, visibility 0s linear 200ms !important;
+        }
+      }
+    </style>
   </head>
 
   <body>
+    <div id="splash" role="status" aria-label="Loading RemoteDesk">
+      <div class="splash-logo"><img src="/rd.png" alt="" draggable="false" /></div>
+      <h1 class="splash-title">RemoteDesk</h1>
+      <p class="splash-tagline">Remote server connection manager</p>
+      <div class="splash-progress"></div>
+      <div class="splash-version" id="splash-version"></div>
+    </div>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

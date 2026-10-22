@@ -28,6 +28,10 @@ pub enum AppError {
     Ftp(String),
     #[error("sftp error: {0}")]
     Sftp(String),
+    #[error("clipboard error: {0}")]
+    Clipboard(String),
+    #[error("remote desktop error: {0}")]
+    Rdp(String),
 }
 
 // Tauri requires command error types to be `Serialize`; the frontend only ever

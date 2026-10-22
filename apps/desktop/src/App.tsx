@@ -12,6 +12,7 @@ import { useLockStore } from "@/stores/useLockStore";
 import { useServerStore } from "@/stores/useServerStore";
 import { useUpdateStore } from "@/stores/useUpdateStore";
 import { useIdleLock } from "@/hooks/useIdleLock";
+import { hideSplash } from "@/lib/splash";
 
 function App() {
   const loaded = useLockStore((s) => s.loaded);
@@ -28,19 +29,19 @@ function App() {
   }, [refreshLock]);
 
   useEffect(() => {
-    if (loaded && !locked) {
-      void loadAll();
-      void checkForUpdate();
+    if (!loaded) return;
+    if (locked) {
+      hideSplash();
+      return;
     }
+    // Keep the splash up until the server list is in, so the app appears
+    // fully populated instead of popping in an empty sidebar first.
+    void loadAll().finally(hideSplash);
+    void checkForUpdate();
   }, [loaded, locked, loadAll, checkForUpdate]);
 
-  if (!loaded) {
-    return (
-      <div className="flex h-screen flex-col items-center justify-center gap-4 bg-background">
-        <img src="/rd.png" alt="RemoteDesk" className="h-20 w-20 animate-pulse rounded-2xl" />
-      </div>
-    );
-  }
+  // The splash screen in index.html covers this initial state.
+  if (!loaded) return null;
 
   if (locked) {
     return (
