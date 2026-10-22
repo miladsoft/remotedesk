@@ -22,7 +22,7 @@ function App() {
   const locked = useLockStore((s) => s.locked);
   const refreshLock = useLockStore((s) => s.refresh);
   const loadAll = useServerStore((s) => s.loadAll);
-  const checkForUpdate = useUpdateStore((s) => s.checkForUpdate);
+  const startUpdateAutoCheck = useUpdateStore((s) => s.startAutoCheck);
   const [settingsOpen, setSettingsOpen] = useState(false);
 
   useIdleLock();
@@ -41,8 +41,12 @@ function App() {
     // Keep the splash up until the server list is in, so the app appears
     // fully populated instead of popping in an empty sidebar first.
     void loadAll().finally(hideSplash);
-    void checkForUpdate();
-  }, [loaded, locked, loadAll, checkForUpdate]);
+  }, [loaded, locked, loadAll]);
+
+  useEffect(() => {
+    if (!loaded || locked) return;
+    return startUpdateAutoCheck();
+  }, [loaded, locked, startUpdateAutoCheck]);
 
   // The splash screen in index.html covers this initial state.
   if (!loaded) return null;

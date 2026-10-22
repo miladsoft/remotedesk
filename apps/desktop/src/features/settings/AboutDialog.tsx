@@ -2,7 +2,8 @@ import { openUrl } from "@tauri-apps/plugin-opener";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { useUpdateStore } from "@/stores/useUpdateStore";
-import pkg from "../../../package.json";
+import { useEffect, useState } from "react";
+import { getVersion } from "@tauri-apps/api/app";
 
 interface AboutDialogProps {
   open: boolean;
@@ -12,6 +13,12 @@ interface AboutDialogProps {
 export function AboutDialog({ open, onOpenChange }: AboutDialogProps) {
   const checking = useUpdateStore((s) => s.checking);
   const checkForUpdate = useUpdateStore((s) => s.checkForUpdate);
+  // The running binary's version (synced from package.json at release time).
+  const [version, setVersion] = useState<string | null>(null);
+
+  useEffect(() => {
+    getVersion().then(setVersion).catch(() => {});
+  }, []);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -20,7 +27,7 @@ export function AboutDialog({ open, onOpenChange }: AboutDialogProps) {
           <img src="/rd.png" alt="RemoteDesk" className="h-16 w-16 rounded-2xl" />
           <div>
             <DialogTitle className="text-base font-semibold">RemoteDesk</DialogTitle>
-            <p className="text-sm text-muted-foreground">Version {pkg.version}</p>
+            <p className="text-sm text-muted-foreground">Version {version ?? "…"}</p>
           </div>
           <p className="text-sm text-muted-foreground">
             A cross-platform, local-first remote server connection manager.
