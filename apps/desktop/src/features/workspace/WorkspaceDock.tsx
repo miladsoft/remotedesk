@@ -5,6 +5,8 @@ import { useTerminalStore } from "@/stores/useTerminalStore";
 import { useFtpStore } from "@/stores/useFtpStore";
 import { TerminalPane } from "@/features/terminal/TerminalPane";
 import { FtpFileManager } from "@/features/ftp/FtpFileManager";
+import { terminalThemeById } from "@/features/terminal/themes";
+import { useTerminalSettingsStore } from "@/stores/useTerminalSettingsStore";
 
 function EmptyState() {
   return (
@@ -31,6 +33,8 @@ export function WorkspaceDock() {
 
   const ftpSessions = useFtpStore((s) => s.sessions);
   const disconnectFtp = useFtpStore((s) => s.disconnect);
+  // The active terminal tab blends into the terminal below it, whatever the theme.
+  const terminalTheme = terminalThemeById(useTerminalSettingsStore((s) => s.themeId)).theme;
 
   if (tabs.length === 0) return <EmptyState />;
 
@@ -50,9 +54,14 @@ export function WorkspaceDock() {
                   onClick={() => setActive(tab)}
                   className={cn(
                     "flex shrink-0 items-center gap-1.5 rounded-t px-2.5 py-1 text-xs",
-                    isActive ? "bg-black text-white" : "text-neutral-400 hover:bg-white/5 hover:text-neutral-200",
+                    !isActive && "text-neutral-400 hover:bg-white/5 hover:text-neutral-200",
                     session.status === "closed" && "opacity-50",
                   )}
+                  style={
+                    isActive
+                      ? { background: terminalTheme.background, color: terminalTheme.foreground }
+                      : undefined
+                  }
                 >
                   <TerminalSquare className="h-3.5 w-3.5 shrink-0 text-neutral-400" />
                   <span

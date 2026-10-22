@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import type { Server } from "@remotedesk/types";
 import {
+  Command,
   CommandDialog,
   CommandEmpty,
   CommandGroup,
@@ -88,22 +89,27 @@ export function CommandPalette() {
       title="Quick connect"
       description="Search your saved connections"
     >
-      <CommandInput
-        placeholder="Search servers by name, host, or user…"
-        value={query}
-        onValueChange={setQuery}
-      />
-      <CommandList>
-        <CommandEmpty>No connections found.</CommandEmpty>
-        {recent.length > 0 && (
-          <CommandGroup heading="Recent">{recent.map(renderItem)}</CommandGroup>
-        )}
-        {results.length > 0 && (
-          <CommandGroup heading={query.trim() ? "Results" : "Favorites"}>
-            {results.map(renderItem)}
-          </CommandGroup>
-        )}
-      </CommandList>
+      {/* cmdk's input/list need a <Command> root for context. Filtering is
+          done here (server-side search), so cmdk's own matching — which would
+          compare the query against server ids — is turned off. */}
+      <Command shouldFilter={false}>
+        <CommandInput
+          placeholder="Search servers by name, host, or user…"
+          value={query}
+          onValueChange={setQuery}
+        />
+        <CommandList>
+          <CommandEmpty>No connections found.</CommandEmpty>
+          {recent.length > 0 && (
+            <CommandGroup heading="Recent">{recent.map(renderItem)}</CommandGroup>
+          )}
+          {results.length > 0 && (
+            <CommandGroup heading={query.trim() ? "Results" : "Favorites"}>
+              {results.map(renderItem)}
+            </CommandGroup>
+          )}
+        </CommandList>
+      </Command>
     </CommandDialog>
   );
 }
