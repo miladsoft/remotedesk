@@ -32,6 +32,7 @@ import {
   type RightClickAction,
 } from "@/stores/useTerminalSettingsStore";
 import { api, errorMessage } from "@/lib/tauri";
+import { TERMINAL_THEMES } from "@/features/terminal/themes";
 
 interface SettingsDialogProps {
   open: boolean;
@@ -157,6 +158,25 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
 
           <section className="flex flex-col gap-3">
             <h3 className="text-sm font-medium">Terminal</h3>
+            <div className="flex items-center justify-between gap-4">
+              <Label>Color theme</Label>
+              <Select value={terminal.themeId} onValueChange={terminal.setThemeId}>
+                <SelectTrigger className="w-56">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {TERMINAL_THEMES.map((t) => (
+                    <SelectItem key={t.id} value={t.id}>
+                      <span
+                        className="h-3 w-3 shrink-0 rounded-sm border"
+                        style={{ background: t.theme.background }}
+                      />
+                      {t.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
             <div className="flex items-center justify-between gap-4">
               <Label htmlFor="terminal-font-size">Font size</Label>
               <Input

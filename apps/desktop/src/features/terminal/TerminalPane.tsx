@@ -14,6 +14,8 @@ import {
   Copy,
   Eraser,
   KeyRound,
+  RotateCw,
+  ScrollText,
   Search,
   TextSelect,
   X,
@@ -39,17 +41,21 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { api, errorMessage } from "@/lib/tauri";
 import { copyServerPassword, credentialLabel } from "@/lib/connect";
 import { cn } from "@/lib/utils";
 import { useServerStore } from "@/stores/useServerStore";
+import { useUiStore } from "@/stores/useUiStore";
 import { useTerminalStore } from "@/stores/useTerminalStore";
 import {
   DEFAULT_TERMINAL_FONT_SIZE,
   useTerminalSettingsStore,
 } from "@/stores/useTerminalSettingsStore";
+import { registerTerminal } from "./registry";
+import { terminalThemeById } from "./themes";
 
 const isMac = navigator.userAgent.includes("Mac");
 const isWindows = navigator.userAgent.includes("Windows");
@@ -92,6 +98,17 @@ function keyName(e: KeyboardEvent): string {
     default:
       return e.key.toLowerCase();
   }
+}
+
+/** App-wide shortcuts (tab switching, palette, snippets, help) that must
+ *  reach the window-level handlers instead of being typed into the shell. */
+function isAppShortcut(e: KeyboardEvent): boolean {
+  const primary = isMac ? e.metaKey : e.ctrlKey;
+  if (e.ctrlKey && e.code === "Tab") return true;
+  if (!primary || e.altKey) return false;
+  if (/^Digit[1-9]$/.test(e.code)) return true;
+  if (isMac) return ["KeyK", "Slash"].includes(e.code) || (e.shiftKey && e.code === "KeyS");
+  return e.shiftKey && ["KeyS", "Slash"].includes(e.code);
 }
 
 /** Maps a keydown to a terminal action, following each platform's terminal
@@ -194,6 +211,10 @@ export function TerminalPane({ sessionId, visible }: TerminalPaneProps) {
     session ? s.servers.find((x) => x.id === session.serverId) : undefined,
   );
   const settings = useTerminalSettingsStore();
+  const terminalTheme = terminalThemeById(settings.themeId);
+  const setSnippetsOpen = useUiStore((s) => s.setSnippetsOpen);
+  const removeSession = useTerminalStore((s) => s.removeSession);
+  const [reconnecting, setReconnecting] = useState(false);
 
   const [hasSelection, setHasSelection] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
@@ -322,6 +343,18 @@ export function TerminalPane({ sessionId, visible }: TerminalPaneProps) {
     showFlash(`Font size ${useTerminalSettingsStore.getState().fontSize}px`);
   }
 
+  async function reconnect() {
+    if (!server || reconnecting) return;
+    setReconnecting(true);
+    try {
+      await useTerminalStore.getState().connect(server);
+      removeSession(sessionId);
+    } catch (err) {
+      toast.error(errorMessage(err));
+      setReconnecting(false);
+    }
+  }
+
   function runAction(action: TerminalAction) {
     switch (action) {
       case "copy":
@@ -352,8 +385,10 @@ export function TerminalPane({ sessionId, visible }: TerminalPaneProps) {
 
   // xterm's event handlers are wired once per session; they reach the latest
   // render's closures (settings, server, state setters) through this ref.
-  const actionsRef = useRef({ runAction, copySelection, pasteText, pasteFromClipboard, showFlash });
-  actionsRef.current = { runAction, copySelection, pasteText, pasteFromClipboard, showFlash };
+  const actionsRef = useRef({ runAction, copySelection, pasteText, pasteFromClipboard, showFlash, reconnect });
+  actionsRef.current = { runAction, copySelection, pasteText, pasteFromClipboard, showFlash, reconnect };
+  const sessionOpenRef = useRef(true);
+  sessionOpenRef.current = session?.status !== "closed";
 
   useEffect(() => {
     const container = containerRef.current;
@@ -364,11 +399,7 @@ export function TerminalPane({ sessionId, visible }: TerminalPaneProps) {
       fontSize: useTerminalSettingsStore.getState().fontSize,
       fontFamily: "ui-monospace, SFMono-Regular, Menlo, Consolas, monospace",
       scrollback: 10000,
-      theme: {
-        background: "#000000",
-        selectionBackground: "#3b82f680",
-        selectionInactiveBackground: "#3b82f640",
-      },
+      theme: terminalThemeById(useTerminalSettingsStore.getState().themeId).theme,
     });
     const fitAddon = new FitAddon();
     const searchAddon = new SearchAddon();
@@ -396,12 +427,30 @@ export function TerminalPane({ sessionId, visible }: TerminalPaneProps) {
       }
     });
 
+    const unregister = registerTerminal(sessionId, {
+      insert: (text) => {
+        term.paste(text);
+        term.focus();
+      },
+      run: (text) => {
+        term.paste(text);
+        void api.session.write(sessionId, "\r").catch(() => {});
+        term.focus();
+      },
+      focus: () => term.focus(),
+    });
+
     const dataDisposable = term.onData((data) => {
       void api.session.write(sessionId, data).catch(() => {});
     });
 
     term.attachCustomKeyEventHandler((e) => {
+      if (isAppShortcut(e)) return false;
       if (e.type !== "keydown") return true;
+      if (!sessionOpenRef.current && e.key === "Enter") {
+        void actionsRef.current.reconnect();
+        return false;
+      }
       const action = shortcutFor(e, term.hasSelection());
       if (!action) return true;
       e.preventDefault();
@@ -476,6 +525,7 @@ export function TerminalPane({ sessionId, visible }: TerminalPaneProps) {
 
     return () => {
       window.clearTimeout(copyOnSelectTimer);
+      unregister();
       unsubscribe();
       dataDisposable.dispose();
       selectionDisposable.dispose();
@@ -491,6 +541,10 @@ export function TerminalPane({ sessionId, visible }: TerminalPaneProps) {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sessionId]);
+
+  useEffect(() => {
+    if (termRef.current) termRef.current.options.theme = terminalTheme.theme;
+  }, [terminalTheme]);
 
   useEffect(() => {
     const term = termRef.current;
@@ -518,8 +572,8 @@ export function TerminalPane({ sessionId, visible }: TerminalPaneProps) {
 
   return (
     <div
-      className="relative h-full w-full bg-black p-2"
-      style={{ display: visible ? "block" : "none" }}
+      className="relative h-full w-full p-2"
+      style={{ display: visible ? "block" : "none", background: terminalTheme.theme.background }}
     >
       <ContextMenu
         onOpenChange={(open) => {
@@ -554,6 +608,10 @@ export function TerminalPane({ sessionId, visible }: TerminalPaneProps) {
               </ContextMenuItem>
             </>
           )}
+          <ContextMenuItem onSelect={() => setSnippetsOpen(true)}>
+            <ScrollText /> Snippets…
+            <ContextMenuShortcut>{isMac ? "⌘⇧S" : "Ctrl+Shift+S"}</ContextMenuShortcut>
+          </ContextMenuItem>
           <ContextMenuSeparator />
           <ContextMenuItem onSelect={selectAll}>
             <TextSelect /> Select all
@@ -613,6 +671,21 @@ export function TerminalPane({ sessionId, visible }: TerminalPaneProps) {
           <SearchButton title="Close (Esc)" onClick={closeSearch}>
             <X className="h-3.5 w-3.5" />
           </SearchButton>
+        </div>
+      )}
+
+      {session?.status === "closed" && (
+        <div className="absolute inset-x-0 bottom-0 z-10 flex items-center justify-center gap-3 border-t border-white/10 bg-neutral-900/95 px-4 py-2.5 text-sm text-neutral-300 backdrop-blur">
+          <span>
+            Session ended{session.exitCode !== undefined ? ` (exit code ${session.exitCode})` : ""}
+          </span>
+          {server && (
+            <Button size="sm" onClick={() => void reconnect()} disabled={reconnecting}>
+              <RotateCw className={cn("h-3.5 w-3.5", reconnecting && "animate-spin")} />
+              Reconnect
+              <kbd className="ml-1 rounded bg-black/20 px-1 text-[10px]">Enter</kbd>
+            </Button>
+          )}
         </div>
       )}
 

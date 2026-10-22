@@ -1,4 +1,4 @@
-import { Search, Settings, Lock } from "lucide-react";
+import { Search, Settings, Lock, Keyboard, ScrollText } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useUiStore } from "@/stores/useUiStore";
@@ -13,6 +13,8 @@ export function Topbar({ onOpenSettings }: TopbarProps) {
   const setSearchQuery = useUiStore((s) => s.setSearchQuery);
   const passphraseSet = useLockStore((s) => s.passphraseSet);
   const lock = useLockStore((s) => s.lock);
+  const setSnippetsOpen = useUiStore((s) => s.setSnippetsOpen);
+  const setShortcutsOpen = useUiStore((s) => s.setShortcutsOpen);
 
   return (
     <header className="flex h-12 shrink-0 items-center gap-3 border-b px-4">
@@ -27,6 +29,12 @@ export function Topbar({ onOpenSettings }: TopbarProps) {
         />
       </div>
       <div className="flex-1" />
+      <Button variant="ghost" size="icon" title="Snippets" onClick={() => setSnippetsOpen(true)}>
+        <ScrollText className="h-4 w-4" />
+      </Button>
+      <Button variant="ghost" size="icon" title="Keyboard shortcuts" onClick={() => setShortcutsOpen(true)}>
+        <Keyboard className="h-4 w-4" />
+      </Button>
       {passphraseSet && (
         <Button variant="ghost" size="icon" title="Lock now" onClick={() => void lock()}>
           <Lock className="h-4 w-4" />

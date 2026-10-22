@@ -4,6 +4,7 @@ import { useTerminalStore } from "@/stores/useTerminalStore";
 import { useFtpStore } from "@/stores/useFtpStore";
 import { useWorkspaceStore } from "@/stores/useWorkspaceStore";
 import { api, errorMessage } from "@/lib/tauri";
+import { markRecent } from "@/lib/recent";
 
 const PROTOCOL_LABELS: Record<Server["protocol"], string> = {
   ssh: "SSH",
@@ -19,6 +20,7 @@ const PROTOCOL_LABELS: Record<Server["protocol"], string> = {
  *  everything else gets a clear "not yet" message instead of silently doing
  *  nothing. */
 export async function connectToServer(server: Server): Promise<void> {
+  markRecent(server.id);
   if (server.protocol === "ssh") {
     try {
       await useTerminalStore.getState().connect(server);
@@ -94,4 +96,15 @@ export async function openFileManager(server: Server): Promise<void> {
   } catch (err) {
     toast.error(errorMessage(err));
   }
+}
+
+/** The equivalent `ssh` command line, for pasting into another terminal. */
+export function sshCommandFor(server: Server): string {
+  const parts = ["ssh"];
+  if (server.port !== 22) parts.push("-p", String(server.port));
+  if (server.authenticationType === "private_key" && server.privateKeyPath) {
+    parts.push("-i", /\s/.test(server.privateKeyPath) ? `"${server.privateKeyPath}"` : server.privateKeyPath);
+  }
+  parts.push(server.username ? `${server.username}@${server.hostname}` : server.hostname);
+  return parts.join(" ");
 }

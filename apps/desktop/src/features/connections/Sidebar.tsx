@@ -12,6 +12,8 @@ import {
   Trash2,
   KeyRound,
   Copy,
+  CopyPlus,
+  SquareTerminal,
   ServerOff,
   Plug,
   FolderOpen,
@@ -39,7 +41,14 @@ import {
 } from "@/components/ui/alert-dialog";
 import { cn } from "@/lib/utils";
 import { errorMessage } from "@/lib/tauri";
-import { connectToServer, copyServerPassword, credentialLabel, openFileManager } from "@/lib/connect";
+import { writeText } from "@tauri-apps/plugin-clipboard-manager";
+import {
+  connectToServer,
+  copyServerPassword,
+  credentialLabel,
+  openFileManager,
+  sshCommandFor,
+} from "@/lib/connect";
 import { useServerStore } from "@/stores/useServerStore";
 import { useUiStore } from "@/stores/useUiStore";
 import { ServerFormDialog } from "./ServerFormDialog";
@@ -131,6 +140,7 @@ function ServerRow({ server, groupName }: { server: Server; groupName?: string }
   const updateServer = useServerStore((s) => s.updateServer);
   const deleteServer = useServerStore((s) => s.deleteServer);
   const [editingServer, setEditingServer] = useState(false);
+  const [duplicating, setDuplicating] = useState(false);
   const [revealOpen, setRevealOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
@@ -153,6 +163,15 @@ function ServerRow({ server, groupName }: { server: Server; groupName?: string }
         isFavorite: !server.isFavorite,
         tagIds: server.tagIds,
       });
+    } catch (err) {
+      toast.error(errorMessage(err));
+    }
+  }
+
+  async function copySshCommand() {
+    try {
+      await writeText(sshCommandFor(server));
+      toast.success("SSH command copied");
     } catch (err) {
       toast.error(errorMessage(err));
     }
@@ -227,6 +246,14 @@ function ServerRow({ server, groupName }: { server: Server; groupName?: string }
           <DropdownMenuItem onClick={() => setEditingServer(true)}>
             <Pencil className="mr-2 h-4 w-4" /> Edit
           </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => setDuplicating(true)}>
+            <CopyPlus className="mr-2 h-4 w-4" /> Duplicate
+          </DropdownMenuItem>
+          {server.protocol === "ssh" && (
+            <DropdownMenuItem onClick={() => void copySshCommand()}>
+              <SquareTerminal className="mr-2 h-4 w-4" /> Copy SSH command
+            </DropdownMenuItem>
+          )}
           {server.credentialReference && (
             <>
               <DropdownMenuItem onClick={() => void copyServerPassword(server)}>
@@ -244,6 +271,9 @@ function ServerRow({ server, groupName }: { server: Server; groupName?: string }
       </DropdownMenu>
 
       <ServerFormDialog open={editingServer} onOpenChange={setEditingServer} server={server} />
+      {duplicating && (
+        <ServerFormDialog open onOpenChange={setDuplicating} template={server} />
+      )}
       <RevealCredentialDialog
         server={revealOpen ? server : null}
         onOpenChange={(open) => !open && setRevealOpen(false)}

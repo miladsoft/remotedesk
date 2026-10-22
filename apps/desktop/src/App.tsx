@@ -12,6 +12,9 @@ import { useLockStore } from "@/stores/useLockStore";
 import { useServerStore } from "@/stores/useServerStore";
 import { useUpdateStore } from "@/stores/useUpdateStore";
 import { useIdleLock } from "@/hooks/useIdleLock";
+import { useAppShortcuts } from "@/hooks/useAppShortcuts";
+import { SnippetsDialog } from "@/features/snippets/SnippetsDialog";
+import { ShortcutsDialog } from "@/features/help/ShortcutsDialog";
 import { hideSplash } from "@/lib/splash";
 
 function App() {
@@ -23,6 +26,7 @@ function App() {
   const [settingsOpen, setSettingsOpen] = useState(false);
 
   useIdleLock();
+  useAppShortcuts();
 
   useEffect(() => {
     void refreshLock();
@@ -65,6 +69,8 @@ function App() {
         </div>
       </div>
       <CommandPalette />
+      <SnippetsDialog />
+      <ShortcutsDialog />
       <SettingsDialog open={settingsOpen} onOpenChange={setSettingsOpen} />
       <Toaster />
       <ThemeEffect />

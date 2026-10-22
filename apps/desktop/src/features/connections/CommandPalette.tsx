@@ -12,6 +12,7 @@ import { useUiStore } from "@/stores/useUiStore";
 import { useServerStore } from "@/stores/useServerStore";
 import { api } from "@/lib/tauri";
 import { connectToServer } from "@/lib/connect";
+import { recentServerIds } from "@/lib/recent";
 
 export function CommandPalette() {
   const open = useUiStore((s) => s.commandPaletteOpen);
@@ -19,14 +20,23 @@ export function CommandPalette() {
   const allServers = useServerStore((s) => s.servers);
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<Server[]>([]);
+  const [recent, setRecent] = useState<Server[]>([]);
 
   useEffect(() => {
     if (!open) return;
     const trimmed = query.trim();
     if (trimmed.length === 0) {
-      setResults(allServers.filter((s) => s.isFavorite).slice(0, 8));
+      const byId = new Map(allServers.map((s) => [s.id, s]));
+      const recentServers = recentServerIds()
+        .map((id) => byId.get(id))
+        .filter((s): s is Server => s !== undefined)
+        .slice(0, 5);
+      const recentIds = new Set(recentServers.map((s) => s.id));
+      setRecent(recentServers);
+      setResults(allServers.filter((s) => s.isFavorite && !recentIds.has(s.id)).slice(0, 8));
       return;
     }
+    setRecent([]);
     const handle = setTimeout(() => {
       api.servers.search(trimmed).then(setResults).catch(() => setResults([]));
     }, 120);
@@ -49,6 +59,28 @@ export function CommandPalette() {
     if (!next) setQuery("");
   }
 
+  function renderItem(server: Server) {
+    return (
+      <CommandItem
+        key={server.id}
+        value={server.id}
+        onSelect={() => {
+          handleOpenChange(false);
+          void connectToServer(server);
+        }}
+      >
+        <span className="font-medium">{server.name}</span>
+        <span className="ml-2 text-muted-foreground">
+          {server.username ? `${server.username}@` : ""}
+          {server.hostname}
+        </span>
+        <span className="ml-auto text-[10px] tracking-wide text-muted-foreground uppercase">
+          {server.protocol.replace("_", " ")}
+        </span>
+      </CommandItem>
+    );
+  }
+
   return (
     <CommandDialog
       open={open}
@@ -63,24 +95,14 @@ export function CommandPalette() {
       />
       <CommandList>
         <CommandEmpty>No connections found.</CommandEmpty>
-        <CommandGroup heading={query.trim() ? "Results" : "Favorites"}>
-          {results.map((server) => (
-            <CommandItem
-              key={server.id}
-              value={server.id}
-              onSelect={() => {
-                handleOpenChange(false);
-                void connectToServer(server);
-              }}
-            >
-              <span className="font-medium">{server.name}</span>
-              <span className="ml-2 text-muted-foreground">
-                {server.username ? `${server.username}@` : ""}
-                {server.hostname}
-              </span>
-            </CommandItem>
-          ))}
-        </CommandGroup>
+        {recent.length > 0 && (
+          <CommandGroup heading="Recent">{recent.map(renderItem)}</CommandGroup>
+        )}
+        {results.length > 0 && (
+          <CommandGroup heading={query.trim() ? "Results" : "Favorites"}>
+            {results.map(renderItem)}
+          </CommandGroup>
+        )}
       </CommandList>
     </CommandDialog>
   );

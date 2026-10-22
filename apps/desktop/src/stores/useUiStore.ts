@@ -14,6 +14,8 @@ interface UiStore {
   viewMode: ViewMode;
   theme: ThemeMode;
   commandPaletteOpen: boolean;
+  snippetsOpen: boolean;
+  shortcutsOpen: boolean;
   sidebarWidth: number;
   sidebarCollapsed: boolean;
 
@@ -23,6 +25,8 @@ interface UiStore {
   setViewMode: (mode: ViewMode) => void;
   setTheme: (theme: ThemeMode) => void;
   setCommandPaletteOpen: (open: boolean) => void;
+  setSnippetsOpen: (open: boolean) => void;
+  setShortcutsOpen: (open: boolean) => void;
   setSidebarWidth: (width: number) => void;
   setSidebarCollapsed: (collapsed: boolean) => void;
 }
@@ -44,6 +48,8 @@ export const useUiStore = create<UiStore>((set) => ({
   viewMode: "list",
   theme: storedTheme,
   commandPaletteOpen: false,
+  snippetsOpen: false,
+  shortcutsOpen: false,
   sidebarWidth: initialSidebarWidth,
   sidebarCollapsed: initialSidebarCollapsed,
 
@@ -56,6 +62,8 @@ export const useUiStore = create<UiStore>((set) => ({
     set({ theme });
   },
   setCommandPaletteOpen: (commandPaletteOpen) => set({ commandPaletteOpen }),
+  setSnippetsOpen: (snippetsOpen) => set({ snippetsOpen }),
+  setShortcutsOpen: (shortcutsOpen) => set({ shortcutsOpen }),
   setSidebarWidth: (width) => {
     const clamped = Math.max(MIN_SIDEBAR_WIDTH, Math.min(width, MAX_SIDEBAR_WIDTH));
     localStorage.setItem("sidebarWidth", String(clamped));

@@ -74,9 +74,17 @@ interface ServerFormDialogProps {
   onOpenChange: (open: boolean) => void;
   /** Present when editing an existing server; absent when creating one. */
   server?: Server;
+  /** When creating, prefill the form from this server (used by "Duplicate"). */
+  template?: Server;
 }
 
-export function ServerFormDialog({ open, onOpenChange, server }: ServerFormDialogProps) {
+function initialValues(server?: Server, template?: Server): ServerFormValues {
+  if (server) return toFormValues(server);
+  if (template) return { ...toFormValues(template), name: `${template.name} (copy)` };
+  return defaultServerFormValues;
+}
+
+export function ServerFormDialog({ open, onOpenChange, server, template }: ServerFormDialogProps) {
   const groups = useServerStore((s) => s.groups);
   const tags = useServerStore((s) => s.tags);
   const createServer = useServerStore((s) => s.createServer);
@@ -93,15 +101,15 @@ export function ServerFormDialog({ open, onOpenChange, server }: ServerFormDialo
     formState: { errors, isSubmitting },
   } = useForm<ServerFormValues>({
     resolver: zodResolver(serverFormSchema),
-    defaultValues: server ? toFormValues(server) : defaultServerFormValues,
+    defaultValues: initialValues(server, template),
   });
 
   useEffect(() => {
     if (open) {
-      reset(server ? toFormValues(server) : defaultServerFormValues);
+      reset(initialValues(server, template));
       setSubmitError(null);
     }
-  }, [open, server, reset]);
+  }, [open, server, template, reset]);
 
   const protocol = watch("protocol");
   const authenticationType = watch("authenticationType");
