@@ -9,5 +9,5 @@
     "typecheck": "pnpm --filter @remotedesk/desktop exec tsc --noEmit",
     "tauri": "pnpm --filter @remotedesk/desktop tauri"
   },
-  "packageManager": "pnpm@9.15.9"
+  "packageManager": "pnpm@12.15.0"
 }
