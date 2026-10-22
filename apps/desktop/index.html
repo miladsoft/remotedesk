@@ -45,7 +45,8 @@
         transition: opacity 420ms ease, visibility 0s linear 420ms;
       }
       .dark #splash {
-        --splash-bg: radial-gradient(120% 90% at 50% 38%, #141a2a 0%, #0a0e18 55%, #05070d 100%);
+        /* Neutral black, matching the app's dark --background (no blue tint). */
+        --splash-bg: radial-gradient(120% 90% at 50% 38%, #1c1c1c 0%, #111111 55%, #0a0a0a 100%);
         --splash-title: #f8fafc;
         --splash-muted: #8b95a7;
         --splash-track: rgba(255, 255, 255, 0.08);
