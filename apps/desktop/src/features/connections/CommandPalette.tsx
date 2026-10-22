@@ -22,6 +22,13 @@ export function CommandPalette() {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<Server[]>([]);
   const [recent, setRecent] = useState<Server[]>([]);
+  const [selected, setSelected] = useState("");
+
+  // Results arrive asynchronously, which cmdk doesn't track — keep the first
+  // entry highlighted so Enter always connects to the top match.
+  useEffect(() => {
+    setSelected((recent[0] ?? results[0])?.id ?? "");
+  }, [recent, results]);
 
   useEffect(() => {
     if (!open) return;
@@ -92,7 +99,7 @@ export function CommandPalette() {
       {/* cmdk's input/list need a <Command> root for context. Filtering is
           done here (server-side search), so cmdk's own matching — which would
           compare the query against server ids — is turned off. */}
-      <Command shouldFilter={false}>
+      <Command shouldFilter={false} value={selected} onValueChange={setSelected}>
         <CommandInput
           placeholder="Search servers by name, host, or user…"
           value={query}
