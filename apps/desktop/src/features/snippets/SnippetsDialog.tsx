@@ -78,7 +78,18 @@ export function SnippetsDialog() {
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="flex max-h-[80vh] flex-col gap-3 sm:max-w-xl">
+      <DialogContent
+        className="flex max-h-[80vh] flex-col gap-3 sm:max-w-xl"
+        onCloseAutoFocus={(e) => {
+          // Usually opened by shortcut from inside a terminal, so there's no
+          // trigger to restore focus to — hand it back to the terminal.
+          const terminal = target && getTerminal(target.id);
+          if (terminal) {
+            e.preventDefault();
+            terminal.focus();
+          }
+        }}
+      >
         <DialogHeader>
           <DialogTitle>Snippets</DialogTitle>
           <DialogDescription>

@@ -696,7 +696,12 @@ export function TerminalPane({ sessionId, visible }: TerminalPaneProps) {
       )}
 
       <AlertDialog open={pendingPaste !== null} onOpenChange={(open) => !open && setPendingPaste(null)}>
-        <AlertDialogContent>
+        <AlertDialogContent
+          onCloseAutoFocus={(e) => {
+            e.preventDefault();
+            termRef.current?.focus();
+          }}
+        >
           <AlertDialogHeader>
             <AlertDialogTitle>Paste {pendingLines.length} lines?</AlertDialogTitle>
             <AlertDialogDescription>

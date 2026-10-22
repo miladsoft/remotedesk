@@ -74,7 +74,9 @@ impl RdpTarget {
             return Err(AppError::Validation("hostname must not be empty".into()));
         }
         if host.chars().any(|c| c.is_control() || c.is_whitespace()) {
-            return Err(AppError::Validation("hostname contains invalid characters".into()));
+            return Err(AppError::Validation(
+                "hostname contains invalid characters".into(),
+            ));
         }
         let port = u16::try_from(server.port)
             .ok()
@@ -86,11 +88,19 @@ impl RdpTarget {
             .map(str::trim)
             .filter(|u| !u.is_empty())
             .map(str::to_string);
-        if username.as_deref().is_some_and(|u| u.chars().any(char::is_control)) {
-            return Err(AppError::Validation("username contains invalid characters".into()));
+        if username
+            .as_deref()
+            .is_some_and(|u| u.chars().any(char::is_control))
+        {
+            return Err(AppError::Validation(
+                "username contains invalid characters".into(),
+            ));
         }
         Ok(Self {
-            host: host.trim_start_matches('[').trim_end_matches(']').to_string(),
+            host: host
+                .trim_start_matches('[')
+                .trim_end_matches(']')
+                .to_string(),
             port,
             username,
         })
@@ -195,14 +205,15 @@ mod platform {
             }
             thread::spawn(move || {
                 thread::sleep(CREDENTIAL_TTL);
-                let _ = cmdkey().arg(format!("/delete:{credential_target}")).status();
+                let _ = cmdkey()
+                    .arg(format!("/delete:{credential_target}"))
+                    .status();
             });
         }
 
-        Command::new("mstsc")
-            .arg(&rdp_file)
-            .spawn()
-            .map_err(|e| AppError::Rdp(format!("could not start Remote Desktop Connection: {e}")))?;
+        Command::new("mstsc").arg(&rdp_file).spawn().map_err(|e| {
+            AppError::Rdp(format!("could not start Remote Desktop Connection: {e}"))
+        })?;
         Ok("Remote Desktop Connection".to_string())
     }
 }
@@ -291,7 +302,9 @@ mod platform {
         _work_dir: &Path,
     ) -> AppResult<String> {
         let username = target.username.as_deref().ok_or_else(|| {
-            AppError::Validation("set a username for this server to connect over Remote Desktop".into())
+            AppError::Validation(
+                "set a username for this server to connect over Remote Desktop".into(),
+            )
         })?;
         let password = password.ok_or_else(|| {
             AppError::Validation(
@@ -352,9 +365,9 @@ mod platform {
                 .spawn()
                 .map_err(|e| AppError::Rdp(format!("could not start FreeRDP: {e}")))?;
             if let Some(mut stdin) = child.stdin.take() {
-                stdin
-                    .write_all(stdin_payload.as_bytes())
-                    .map_err(|e| AppError::Rdp(format!("could not pass credentials to FreeRDP: {e}")))?;
+                stdin.write_all(stdin_payload.as_bytes()).map_err(|e| {
+                    AppError::Rdp(format!("could not pass credentials to FreeRDP: {e}"))
+                })?;
             }
             child
         } else {
@@ -424,8 +437,12 @@ mod tests {
 
     #[test]
     fn rejects_newline_injection() {
-        assert!(RdpTarget::from_server(&rdp_server("host\nalternate shell:s:cmd", 3389, None)).is_err());
-        assert!(RdpTarget::from_server(&rdp_server("host", 3389, Some("bob\r\nshell:s:x"))).is_err());
+        assert!(
+            RdpTarget::from_server(&rdp_server("host\nalternate shell:s:cmd", 3389, None)).is_err()
+        );
+        assert!(
+            RdpTarget::from_server(&rdp_server("host", 3389, Some("bob\r\nshell:s:x"))).is_err()
+        );
     }
 
     #[test]

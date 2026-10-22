@@ -14,7 +14,7 @@ pub fn local_list_dir(
     let home = app
         .path()
         .home_dir()
-        .map_err(|e| AppError::Io(std::io::Error::new(std::io::ErrorKind::Other, e.to_string())))?;
+        .map_err(|e| AppError::Io(std::io::Error::other(e.to_string())))?;
     LocalFsService::list_dir(path, &home)
 }
 

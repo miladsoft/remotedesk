@@ -5,7 +5,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { getTerminal } from "@/features/terminal/registry";
 import { useUiStore } from "@/stores/useUiStore";
+import { useWorkspaceStore } from "@/stores/useWorkspaceStore";
 
 const isMac = navigator.userAgent.includes("Mac");
 const isWindows = navigator.userAgent.includes("Windows");
@@ -50,7 +52,17 @@ export function ShortcutsDialog() {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent
+        className="sm:max-w-lg"
+        onCloseAutoFocus={(e) => {
+          const tab = useWorkspaceStore.getState().activeTab;
+          const terminal = tab?.type === "terminal" ? getTerminal(tab.id) : undefined;
+          if (terminal) {
+            e.preventDefault();
+            terminal.focus();
+          }
+        }}
+      >
         <DialogHeader>
           <DialogTitle>Keyboard shortcuts</DialogTitle>
           <DialogDescription>Work faster without reaching for the mouse.</DialogDescription>

@@ -42,5 +42,8 @@ pub fn rdp_connect(
     }
 
     let client = RdpService::launch(&server, password.as_deref().map(String::as_str), &work_dir)?;
-    Ok(RdpLaunch { client, password_copied })
+    Ok(RdpLaunch {
+        client,
+        password_copied,
+    })
 }
