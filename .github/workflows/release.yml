@@ -158,17 +158,38 @@ jobs:
       - name: Install frontend dependencies
         run: pnpm install --frozen-lockfile
 
+      # macOS builds are signed but not notarized (no paid Apple Developer
+      # membership). The Developer ID certificate is used while its secrets
+      # are configured; otherwise the app is ad-hoc signed, which Apple
+      # Silicon requires for it to launch at all. Notarization credentials
+      # (APPLE_ID / APPLE_PASSWORD / APPLE_TEAM_ID) are deliberately never
+      # passed: Tauri notarizes whenever they exist, and that needs an
+      # active membership.
+      - name: Configure macOS signing
+        if: matrix.platform == 'macos-latest'
+        shell: bash
+        env:
+          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
+        run: |
+          if [ -n "$APPLE_CERTIFICATE" ] && [ -n "$APPLE_SIGNING_IDENTITY" ]; then
+            echo "Signing with the Developer ID certificate."
+            # Multi-line syntax: the base64 certificate may contain newlines.
+            for name in APPLE_CERTIFICATE APPLE_CERTIFICATE_PASSWORD APPLE_SIGNING_IDENTITY; do
+              delimiter="EOF_$(openssl rand -hex 8)"
+              printf '%s<<%s\n%s\n%s\n' "$name" "$delimiter" "${!name}" "$delimiter" >> "$GITHUB_ENV"
+            done
+          else
+            echo "No signing certificate configured; using ad-hoc signing."
+            echo "APPLE_SIGNING_IDENTITY=-" >> "$GITHUB_ENV"
+          fi
+
       - name: Build and publish release
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          # macOS code signing + notarization — no-ops on Windows/Linux runners.
-          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
-          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
-          APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
-          APPLE_ID: ${{ secrets.APPLE_ID }}
-          APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
-          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          # macOS signing variables come from "Configure macOS signing" above.
           # Signs the updater artifacts (.sig files + latest.json) so the app
           # can verify update authenticity before installing one.
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
@@ -183,6 +204,13 @@ jobs:
             - **macOS**: `.dmg` (universal — works on Apple Silicon and Intel)
             - **Windows**: `.msi` installer
             - **Linux**: `.deb`, `.rpm`, or `.AppImage`
+
+            ### First launch on macOS
+            RemoteDesk isn't notarized by Apple, so macOS blocks the first launch of a freshly downloaded copy. Either:
+            - open the app once, then go to **System Settings → Privacy & Security** and click **Open Anyway**, or
+            - run `xattr -dr com.apple.quarantine /Applications/RemoteDesk.app` in Terminal.
+
+            This is needed only once. Updates installed from inside the app don't need it.
           releaseDraft: false
           prerelease: false
           args: ${{ matrix.args }}

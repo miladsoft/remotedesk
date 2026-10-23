@@ -24,7 +24,9 @@ Grab the latest build for your platform from the [**Releases**](https://github.c
 | Windows | `.msi` installer |
 | Linux | `.deb`, `.rpm`, or `.AppImage` |
 
-> **Note:** builds aren't code-signed yet (no Apple Developer / Windows code-signing certificate). macOS will show an "unidentified developer" warning (right-click the app → *Open* to bypass) and Windows SmartScreen may warn on first launch — this is expected for an unsigned open-source build.
+> **First launch on macOS:** the app is signed but not notarized by Apple, so macOS blocks the first launch of a freshly downloaded copy. Open it once, then go to **System Settings → Privacy & Security** and click **Open Anyway** — or run `xattr -dr com.apple.quarantine /Applications/RemoteDesk.app` in Terminal. This is a one-time step; updates installed from inside the app don't need it.
+>
+> **Windows:** the installer isn't code-signed, so SmartScreen may warn on first launch — click *More info → Run anyway*.
 
 ## Development
 
